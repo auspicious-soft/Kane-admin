@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { Mulish } from "next/font/google";
 import { madeTommy } from "@/lib/fonts";
 import "./globals.css";
+import SessionWrapper from "@/components/SessionWrapper"; // ✅ Import wrapper
+
 
 const mulish = Mulish({
   variable: "--font-mulish",
@@ -22,7 +24,9 @@ export default function RootLayout({
   return (
     <html lang="en">
        <body className={clsx('dark', mulish.variable, madeTommy.variable, 'antialiased')}>
-        {children}
+        <SessionWrapper>
+          {children}
+        </SessionWrapper>
       </body>
     </html>
   );
