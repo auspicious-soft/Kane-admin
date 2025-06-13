@@ -27,6 +27,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { UserArrowIcon } from "@/lib/svg"
+import { signOut } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 export function NavUser({
   user,
@@ -38,6 +40,22 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    try {
+      // Clear any stored tokens
+      localStorage.removeItem("backend_token")
+      
+      // Sign out from NextAuth
+      await signOut({ redirect: false })
+      
+      // Navigate to home page
+      router.push("/")
+    } catch (error) {
+      console.error("Logout error:", error)
+    }
+  }
 
   return (
     <SidebarMenu>
@@ -89,7 +107,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem >
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOut />
               Log out
             </DropdownMenuItem>
@@ -99,3 +117,4 @@ export function NavUser({
     </SidebarMenu>
   )
 }
+

@@ -16,7 +16,9 @@ import {
   UserIcon,
 } from "@/lib/svg";
 import { NavProjects } from "./nav-projects";
-
+import { redirect } from "next/dist/server/api-utils";
+import {signOut} from "next-auth/react";
+import { useRouter } from "next/navigation";
 // This is sample data.
 const data = {
   user: {
@@ -61,6 +63,33 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+
+  const router = useRouter();
+  const handleLogout = async () =>{
+   try {
+     localStorage.removeItem("token")
+      await signOut({
+        redirect:false
+      });
+      router.push("/");
+   } catch (error) {
+     localStorage.removeItem("token")
+      await signOut({
+        redirect:false
+      });
+      router.push("/");
+   }
+  }
+  const projectsWithHandlers = data.projects.map(item => {
+    if (item.title === "Logout") {
+      return {
+        ...item,
+        onClick: handleLogout,
+      };
+    }
+    return item;
+  });
+  
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -70,7 +99,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavProjects items={data.projects} />
+      <NavProjects items={projectsWithHandlers} />
       </SidebarFooter>
     </Sidebar>
   );
