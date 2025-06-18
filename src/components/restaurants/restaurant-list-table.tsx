@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Table,
@@ -29,13 +29,16 @@ import {
   PaginationLink,
 } from "@/components/ui/pagination";
 import Image from "next/image";
-import { getAllRestaurants } from "@/services/admin-services";
+import { deleteRestaurant, getAllRestaurants } from "@/services/admin-services";
 import { useLoading } from "@/context/loading-context";
 import { RESTAURANT_URLS } from "@/constants/apiUrls";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 const RESTAURANTS_PER_PAGE = 12;
 
 type Restaurant = {
+  _id: number;
   id: number;
   restaurantImage: string;
   name: string;
@@ -49,20 +52,37 @@ export default function RestaurantlistTable() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [totalRestaurants, setTotalRestaurants] = useState(0);
   const { startLoading, stopLoading } = useLoading();
+  const router = useRouter();
+
+    const hasFetched = useRef(false);
 
   useEffect(() => {
     setLoading(true);
     startLoading();
     const fetchRestaurants = async () => {
+      if (hasFetched.current) {
+        const start = (currentPage - 1) * RESTAURANTS_PER_PAGE;
+        const paginated = restaurants.slice(
+          start,
+          start + RESTAURANTS_PER_PAGE
+        );
+        setRestaurants(paginated);
+        setLoading(false);
+        stopLoading();
+        return;
+      }
+
+      hasFetched.current = true;
       try {
         setError(null);
         const response = await getAllRestaurants(
           `${RESTAURANT_URLS.GET_ALL_RESTAURANTS}`
         );
         const restaurants = response.data.data;
-        console.log(restaurants, "asdasd");
+        toast.success(response.data.message || "Restaurants fetched successfully")
         const mappedRestaurants: Restaurant[] = restaurants.map(
           (restaurant: any, i) => ({
+            _id: restaurant._id,
             id: i + 1,
             name: restaurant.restaurantName,
             restaurantImage: "/images/rest-image.png",
@@ -89,6 +109,7 @@ export default function RestaurantlistTable() {
     };
     fetchRestaurants();
   }, [currentPage]);
+
 
   const totalPages = Math.ceil(totalRestaurants / RESTAURANTS_PER_PAGE);
 
@@ -122,6 +143,31 @@ export default function RestaurantlistTable() {
 
     return rangeWithDots;
   }
+
+  const handleDelete = async (restaurantId: string) => {
+    try {
+      setLoading(true);
+      startLoading();
+
+      await deleteRestaurant(
+        `${RESTAURANT_URLS.DELETE_RESTAURANT(restaurantId as string)}`
+      );
+
+      setRestaurants((prevRestaurants) =>
+        prevRestaurants.filter(
+          (restaurant) => String(restaurant._id) !== restaurantId
+        )
+      );
+      setTotalRestaurants((prev) => prev - 1);
+      setLoading(false);
+      stopLoading();
+    } catch (error) {
+      console.error("Error deleting restaurant:", error);
+      setError("Failed to delete restaurant. Please try again later.");
+      setLoading(false);
+      stopLoading();
+    }
+  };
 
   return (
     <>
@@ -179,14 +225,17 @@ export default function RestaurantlistTable() {
                   <TableCell>{restaurant.name}</TableCell>
                   <TableCell>{restaurant.stamps}</TableCell>
                   <TableCell>
-                    <Link href={`/restaurants/${restaurant.id}`}>
-                      <Button
-                        variant="link"
-                        className="text-[#c5c5c5] text-xs p-0 h-auto cursor-pointer"
-                      >
-                        View
-                      </Button>
-                    </Link>
+                    {/* <Link href={`/restaurants/${restaurant._id}`}> */}
+                    <Button
+                      onClick={() =>
+                        router.push(`/restaurants/${restaurant._id}`)
+                      }
+                      variant="link"
+                      className="text-[#c5c5c5] text-xs p-0 h-auto cursor-pointer"
+                    >
+                      View
+                    </Button>
+                    {/* </Link> */}
                     <AlertDialog>
                       <AlertDialogTrigger className="cursor-pointer rounded inline-flex justify-center items-center font-normal py-2.5 px-7 text-[#c5c5c5] text-xs">
                         Delete
@@ -202,7 +251,9 @@ export default function RestaurantlistTable() {
                           <AlertDialogCancel className="w-full shrink-1 py-3 px-7 h-auto border-0 cursor-pointer !bg-[#e4bc84] rounded-lg !text-[#0a0e11] text-sm">
                             Cancel
                           </AlertDialogCancel>
-                          <AlertDialogAction className="w-full shrink-1 py-3 px-7 h-auto border-0 cursor-pointer rounded-lg !text-white text-sm !bg-[#b40000]">
+                          <AlertDialogAction className="w-full shrink-1 py-3 px-7 h-auto border-0 cursor-pointer rounded-lg !text-white text-sm !bg-[#b40000]"
+                          onClick={() => handleDelete(String(restaurant._id))}
+                          >
                             Yes, Delete
                           </AlertDialogAction>
                         </AlertDialogFooter>

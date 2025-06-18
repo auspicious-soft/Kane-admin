@@ -4,7 +4,7 @@ import Image from "next/image";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,152 +17,299 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useLoading } from "@/context/loading-context";
+import {
+  GetRestaurantById,
+  updateRestaurantById,
+  updateRestaurantOfferById,
+} from "@/services/admin-services";
+import { RESTAURANT_URLS } from "@/constants/apiUrls";
+import { useParams, useRouter } from "next/navigation"; 
+import toast from "react-hot-toast";
+import dummyImg from "../../../../../../public/images/auth-image.jpg";
 
-// Sample restaurant data
-const restaurantOffers = [
-  {
-    id: 1,
-    title: "Get free coffee",
-    image: "/images/auth-image.jpg",
-    stamps: "10",
-    description: "Get a free pizza when you buy any large pizza. Valid until end of month.",
-    discount: "50% OFF",
-    restaurant: "Pizza Palace",
-    unlockRewards: "Collect 10 stamps to unlock this amazing offer. Visit our restaurant and make a purchase to earn stamps.",
-    redeemInStore: "Show this offer to our staff at the counter to redeem your free coffee. Valid for dine-in and takeaway."
-  },
-    {
-    id: 2,
-    title: "Get free coffee",
-    image: "/images/auth-image.jpg",
-    stamps: "10",
-    description: "Get a free pizza when you buy any large pizza. Valid until end of month.",
-    discount: "50% OFF",
-    restaurant: "Pizza Palace",
-    unlockRewards: "Collect 10 stamps to unlock this amazing offer. Visit our restaurant and make a purchase to earn stamps.",
-    redeemInStore: "Show this offer to our staff at the counter to redeem your free coffee. Valid for dine-in and takeaway."
-  },
-    {
-    id: 3,
-    title: "Get free coffee",
-    image: "/images/auth-image.jpg",
-    stamps: "10",
-    description: "Get a free pizza when you buy any large pizza. Valid until end of month.",
-    discount: "50% OFF",
-    restaurant: "Pizza Palace",
-    unlockRewards: "Collect 10 stamps to unlock this amazing offer. Visit our restaurant and make a purchase to earn stamps.",
-    redeemInStore: "Show this offer to our staff at the counter to redeem your free coffee. Valid for dine-in and takeaway."
-  },
-    {
-    id: 4,
-    title: "Get free coffee",
-    image: "/images/auth-image.jpg",
-    stamps: "10",
-    description: "Get a free pizza when you buy any large pizza. Valid until end of month.",
-    discount: "50% OFF",
-    restaurant: "Pizza Palace",
-    unlockRewards: "Collect 10 stamps to unlock this amazing offer. Visit our restaurant and make a purchase to earn stamps.",
-    redeemInStore: "Show this offer to our staff at the counter to redeem your free coffee. Valid for dine-in and takeaway."
-  },
-];
+interface Offer {
+  _id: string;
+  offerName: string;
+  image: string;
+  description: string;
+  visits: string;
+  redeemInStore: string;
+  unlockRewards: string;
+}
+
+// Define the Restaurant type
+interface Restaurant {
+  restaurantName: string;
+  logo: string;
+}
 
 const Page = () => {
+  const params = useParams();
+  const id = params?.id;
   const [currentImage, setCurrentImage] = useState<File | null>(null);
-  const [selectedOffer, setSelectedOffer] = useState<typeof restaurantOffers[0] | null>(null);
+  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  
-  // Form states for editing
-  const [editFormData, setEditFormData] = useState({
-    title: "",
-    stamps: "",
-    description: "",
-    unlockRewards: "",
-    redeemInStore: ""
+  const [restaurantData, setRestaurantData] = useState<Restaurant>({
+    restaurantName: "",
+    logo: "",
   });
+  const [restaurantOffersData, setRestaurantOffersData] = useState<Offer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { startLoading, stopLoading } = useLoading();
+  const router = useRouter();
+  const [editFormData, setEditFormData] = useState({
+    restaurantName: "",
+    image: "dummyImage2.png",
+  });
+
+  const [editRestroOfferData, setEditRestroOfferData] = useState({
+    offerName: "",
+    image: "offerDummyImage2.png",
+    description: "",
+    visits: "",
+    redeemInStore: "",
+    unlockRewards: "",
+  });
+const hasFetched = useRef(false);
+  const currentId = useRef(id);
+
+useEffect(() => {
+    if (!id) return;
+
+    if (currentId.current !== id) {
+      hasFetched.current = false;
+      currentId.current = id;
+    }
+
+    const fetchRestaurantData = async () => {
+      if (hasFetched.current) return; 
+      hasFetched.current = true;
+
+      try {
+        setError(null);
+        startLoading();
+        setLoading(true);
+        const response = await GetRestaurantById(
+          RESTAURANT_URLS.GET_SINGLE_RESTAURANT(id as string)
+        );
+        if (response.status === 200) {
+          const restData = response.data.data.restaurant;
+          const restOfferData = response.data.data.offers;
+          setRestaurantData(restData);
+          setRestaurantOffersData(restOfferData);
+          setEditFormData({
+            restaurantName: restData.restaurantName || '',
+            image: restData.logo || '',
+          });
+          setEditRestroOfferData({
+            offerName: restOfferData.offerName || '',
+            image: restOfferData.image || '',
+            description: restOfferData.description || '',
+            visits: restOfferData.visits || '',
+            redeemInStore: restOfferData.redeemInStore || '',
+            unlockRewards: restOfferData.unlockRewards || '',
+          });
+          toast.success(
+            response.data.message || 'Restaurant details fetched successfully'
+          );
+        } else {
+          toast.error(response.data.message || 'Failed to fetch details.');
+        }
+      } catch (error) {
+        console.error('Error fetching restaurant:', error);
+        setError('Failed to fetch restaurant data.');
+        toast.error('Failed to fetch restaurant data.');
+      } finally {
+        setLoading(false);
+        stopLoading();
+      }
+    };
+
+    fetchRestaurantData();
+  }, [id]);
+
+  const handleCardClick = (id: string) => {
+    const offer = restaurantOffersData.find((offer) => offer._id === id);
+    if (offer) {
+      setSelectedOffer(offer);
+      setIsOfferDialogOpen(true);
+      setIsEditMode(false);
+      setEditRestroOfferData({
+        offerName: offer.offerName,
+        image: offer.image,
+        description: offer.description,
+        visits: offer.visits,
+        redeemInStore: offer.redeemInStore,
+        unlockRewards: offer.unlockRewards,
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    setCurrentImage(null);
+  };
+
+  const handleSaveEditOffer = async () => {
+    if (!id || !selectedOffer?._id) return;
+
+    setLoading(true);
+    startLoading();
+
+    try {
+      const response = await updateRestaurantOfferById(
+        `${RESTAURANT_URLS.UPDATE_RESTAURANT_OFFER(selectedOffer._id)}`,
+        {
+          ...editRestroOfferData,
+          image: editRestroOfferData.image,
+        }
+      );
+
+      if (response.status === 200) {
+        toast.success(response.data.message || "Offer updated successfully.");
+
+        setRestaurantOffersData((prev) =>
+          prev.map((offer) =>
+            offer._id === selectedOffer._id
+              ? {
+                  ...offer,
+                  ...editRestroOfferData,
+                  image: editRestroOfferData.image,
+                }
+              : offer
+          )
+        );
+
+        setSelectedOffer((prev) =>
+          prev
+            ? {
+                ...prev,
+                ...editRestroOfferData,
+                image: editRestroOfferData.image,
+              }
+            : prev
+        );
+
+        setEditRestroOfferData({
+          offerName: "",
+          image: "offerDummyImage2.png",
+          description: "",
+          visits: "",
+          redeemInStore: "",
+          unlockRewards: "",
+        });
+        setIsEditMode(false);
+        setCurrentImage(null);
+        setIsOfferDialogOpen(false);
+      } else {
+        toast.error(
+          response.data.message || "An error occurred while updating the offer."
+        );
+      }
+    } catch (error) {
+      console.error("Error updating offer:", error);
+      setError("Failed to update offer. Please try again later.");
+    } finally {
+      setLoading(false);
+      stopLoading();
+    }
+  };
 
   const handleImageSelect = (file: File) => {
     setCurrentImage(file);
+    setEditFormData((prev) => ({
+      ...prev,
+      logo: file.name,
+    }));
     console.log("Image selected:", file.name);
   };
 
   const handleImageRemove = () => {
     setCurrentImage(null);
+    setEditFormData((prev) => ({
+      ...prev,
+      logo: "",
+    }));
     console.log("Image removed");
-  };
-
-  const handleCardClick = (offerId: number) => {
-    const offer = restaurantOffers.find(offer => offer.id === offerId);
-    if (offer) {
-      setSelectedOffer(offer);
-      setIsOfferDialogOpen(true);
-      setIsEditMode(false); // Reset to view mode
-      // Initialize form data with current offer data
-      setEditFormData({
-        title: offer.title,
-        stamps: offer.stamps,
-        description: offer.description,
-        unlockRewards: offer.unlockRewards,
-        redeemInStore: offer.redeemInStore
-      });
-    }
   };
 
   const handleEditClick = () => {
     setIsEditMode(true);
   };
 
-  const handleCancelEdit = () => {
-    setIsEditMode(false);
-    // Reset form data to original values
-    if (selectedOffer) {
-      setEditFormData({
-        title: selectedOffer.title,
-        stamps: selectedOffer.stamps,
-        description: selectedOffer.description,
-        unlockRewards: selectedOffer.unlockRewards,
-        redeemInStore: selectedOffer.redeemInStore
-      });
+  const handleEditSaveRestaurant = async () => {
+    if (!id) return;
+    setLoading(true);
+    startLoading();
+    try {
+      const response = await updateRestaurantById(
+        `${RESTAURANT_URLS.UPDATE_RESTAURANT(id as string)}`,
+        {
+          ...editFormData,
+        }
+      );
+      if (response.status === 200) {
+        toast.success(
+          response.data.message || "Restaurant Updated Successfully."
+        );
+        setRestaurantData((prev) => ({
+          ...prev,
+          ...editFormData,
+        }));
+        setEditFormData({
+          restaurantName: "",
+          image: "dummyImage2.png",
+        });
+      } else {
+        toast.error(
+          response.data.message ||
+            "An error occured while updating the restaurant"
+        );
+      }
+    } catch (error) {
+      console.error("Error updating restaurants:", error);
+      setError("Failed to update restaurants. Please try again later.");
+      setLoading(false);
+      stopLoading();
+    } finally {
+      setLoading(false);
+      stopLoading();
     }
-    setCurrentImage(null);
-  };
-
-  const handleSaveEdit = () => {
-    // Here you would typically update the data in your database/state
-    console.log("Saving edited data:", editFormData);
-    console.log("New image:", currentImage);
-    
-    // For demo purposes, we'll just exit edit mode
-    setIsEditMode(false);
-    setCurrentImage(null);
-    
-    // You could update the selectedOffer here with new data
-    // setSelectedOffer({...selectedOffer, ...editFormData});
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setEditFormData(prev => ({
+    setEditFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
+  const handleOfferInputChange = (field: keyof typeof editRestroOfferData, value: string) => {
+  setEditRestroOfferData((prev) => ({
+    ...prev,
+    [field]: value,
+  }));
+};
+
   return (
     <>
-      <div className="bg-[#0a0e11] rounded border border-[#2e2e2e] p-4 md:py-5 md:px-7  flex flex-col gap-2.5">
+      <div className="bg-[#0a0e11] rounded border border-[#2e2e2e] p-4 md:py-5 md:px-7 flex flex-col gap-2.5">
         <div>
           <div className="flex flex-col lg:flex-row gap-10">
             <div className="w-full max-w-[250px] md:min-w-[250px]">
-              <div className="flex flex-col gap-3 w-[250px] ">
+              <div className="flex flex-col gap-3 w-[250px]">
                 <Label htmlFor="name" className="text-sm">
                   Restaurant logo
                 </Label>
                 <Image
-                  src="/images/auth-image.jpg"
+                  src={"/images/auth-image.jpg"}
                   alt="Restaurant Logo"
                   width={250}
                   height={250}
-                  className="rounded-[10px] object-cover  w-[250px] h-[250px]"
+                  className="rounded-[10px] object-cover w-[250px] h-[250px]"
                 />
               </div>
             </div>
@@ -174,7 +321,11 @@ const Page = () => {
                 <Input
                   id="name"
                   type="text"
-                  value="Starbucks"
+                  value={
+                    editFormData.restaurantName ||
+                    restaurantData.restaurantName ||
+                    ""
+                  }
                   readOnly
                   required
                 />
@@ -196,23 +347,35 @@ const Page = () => {
                         placeholder="Upload Restaurant Logo"
                       />
                       {currentImage && (
-                        <div className="text-xs text-gray-400 mt-2 hidden">
+                        <div className="text-xs text-gray-400 mt-2">
                           Selected image: {currentImage.name}
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-col gap-3  max-w-[370px] m-auto w-full">
+                    <div className="flex flex-col gap-3 max-w-[370px] m-auto w-full">
                       <Label htmlFor="name" className="text-sm">
                         Restaurant Name
                       </Label>
-                      <Input id="name" type="text" placeholder="Starbucks" />
+                      <Input
+                        id="name"
+                        type="text"
+                        value={editFormData.restaurantName}
+                        onChange={(e) =>
+                          handleInputChange("restaurantName", e.target.value)
+                        }
+                        placeholder="Enter restaurant name"
+                      />
                     </div>
                   </AlertDialogHeader>
                   <AlertDialogFooter className="!justify-center items-center mt-5">
-                    <AlertDialogCancel className=" py-3 px-7 h-auto cursor-pointer !bg-transparent rounded-lg !text-[#e4bc84] !border-[#E4BC84] border-1 text-sm min-w-[104px]">
+                    <AlertDialogCancel className="py-3 px-7 h-auto cursor-pointer !bg-transparent rounded-lg !text-[#e4bc84] !border-[#E4BC84] border-1 text-sm min-w-[104px]">
                       Cancel
                     </AlertDialogCancel>
-                    <AlertDialogAction className="py-3 px-7 h-auto border-0 cursor-pointer rounded-lg !text-black text-sm !bg-[#E4BC84] min-w-[104px]">
+                    <AlertDialogAction
+                      className="py-3 px-7 h-auto border-0 cursor-pointer rounded-lg !text-black text-sm !bg-[#E4BC84] min-w-[104px]"
+                      type="button"
+                      onClick={handleEditSaveRestaurant}
+                    >
                       Save
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -222,62 +385,62 @@ const Page = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="bg-[#0a0e11] rounded border border-[#2e2e2e] p-4 md:py-5 md:px-7 flex flex-col gap-2.5">
         <div className="flex flex-col md:flex-row items-center justify-between gap-2">
           <h2 className="text-xl leading-loose">Restaurant Offers</h2>
-          <a
-            href="/add-new-offers"
+          <div
             className="px-[30px] py-2.5 bg-[#e4bc84] rounded inline-flex justify-center items-center gap-2 text-[#0a0e11] text-sm font-normal"
+            onClick={() => router.push(`/add-new-offers?source=offer&id=${id}`)}
           >
             Add New Offers
-          </a>
+          </div>
         </div>
-        
+
         {/* Restaurant Offers Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {restaurantOffers.map((offer) => (
+          {restaurantOffersData.map((offer) => (
             <div
-              key={offer.id}
-              onClick={() => handleCardClick(offer.id)}
+              key={offer._id}
+              onClick={() => handleCardClick(offer._id)}
               className="overflow-hidden cursor-pointer transition-all duration-300 group"
             >
               {/* Image Container */}
               <div className="relative overflow-hidden">
                 <Image
-                  src={offer.image}
-                  alt={offer.title}
+                  src={dummyImg || null}
+                  alt={"alt"}
                   width={400}
                   height={200}
                   className=" aspect-square rounded w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   onError={(e) => {
-                    // Fallback to placeholder if image doesn't exist
                     e.currentTarget.src = "/images/auth-image.jpg";
                   }}
                 />
               </div>
-              
+
               {/* Content */}
               <div className="pt-4">
                 <div className="flex flex-col gap-2">
                   <h3 className="text-white text-lg line-clamp-1 transition-colors">
-                    {offer.title}
+                    {offer.offerName}
                   </h3>
                   <p className="text-[#8B8B8B] text-sm ">
-                    {offer.stamps} stamps required
+                    {offer.visits} stamps required
                   </p>
                 </div>
-              
               </div>
             </div>
           ))}
         </div>
-        
+
         {/* Empty State */}
-        {restaurantOffers.length === 0 && (
+        {restaurantOffersData.length === 0 && (
           <div className="text-center py-12">
             <div className="text-white text-lg mb-2">No offers available</div>
-            <div className="text-gray-500 text-sm">Check back later for new restaurant offers</div>
+            <div className="text-gray-500 text-sm">
+              Check back later for new restaurant offers
+            </div>
           </div>
         )}
       </div>
@@ -292,7 +455,7 @@ const Page = () => {
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl leading-loose">Edit Offer Detail</h2>
                   {!isEditMode && (
-                    <Button 
+                    <Button
                       onClick={handleEditClick}
                       className="max-w-max px-[30px] py-2.5 bg-[#e4bc84] rounded inline-flex justify-center items-center gap-2 text-[#0a0e11] text-sm font-normal hover:bg-[#d4a870]"
                     >
@@ -312,8 +475,8 @@ const Page = () => {
                         />
                       ) : (
                         <Image
-                          src={selectedOffer.image}
-                          alt={selectedOffer.title}
+                          src={dummyImg}
+                          alt={"alt"}
                           width={250}
                           height={250}
                           className="rounded-lg object-cover w-[250px] h-[250px]"
@@ -337,13 +500,16 @@ const Page = () => {
                         <Input
                           id="offerName"
                           type="text"
-                          value={editFormData.title}
-                          onChange={(e) => handleInputChange('title', e.target.value)}
+                          value={editRestroOfferData.offerName}
+                          onChange={(e) =>
+                            handleOfferInputChange("offerName", e.target.value)
+                          }
                           required
+                          name="offerName"
                         />
                       ) : (
                         <div className="px-5 py-3.5 bg-[#0a0e11] border border-[#2e2e2e] rounded-md text-[#c5c5c5] text-xs font-normal">
-                          {selectedOffer.title}
+                          {selectedOffer.offerName}
                         </div>
                       )}
                     </div>
@@ -357,13 +523,16 @@ const Page = () => {
                         <Input
                           id="stamps"
                           type="text"
-                          value={editFormData.stamps}
-                          onChange={(e) => handleInputChange('stamps', e.target.value)}
+                          value={editRestroOfferData.visits}
+                          onChange={(e) =>
+                            handleOfferInputChange("visits", e.target.value)
+                          }
+                          name="visits"
                           required
                         />
                       ) : (
                         <div className="px-5 py-3.5 bg-[#0a0e11] border border-[#2e2e2e] rounded-md text-[#c5c5c5] text-xs font-normal">
-                          {selectedOffer.stamps} stamps
+                          {selectedOffer.visits} stamps
                         </div>
                       )}
                     </div>
@@ -374,8 +543,11 @@ const Page = () => {
                       {isEditMode ? (
                         <Textarea
                           className="!bg-[#0A0E11] !text-xs"
-                          value={editFormData.description}
-                          onChange={(e) => handleInputChange('description', e.target.value)}
+                          value={editRestroOfferData.description}
+                          onChange={(e) =>
+                            handleOfferInputChange("description", e.target.value)
+                          }
+                          name="description"
                         />
                       ) : (
                         <div className="min-h-24 px-5 py-3.5 bg-[#0a0e11] border border-[#2e2e2e] rounded-md text-[#c5c5c5] text-xs font-normal">
@@ -386,14 +558,15 @@ const Page = () => {
 
                     {/* Unlock Rewards */}
                     <div className="flex flex-col gap-3">
-                      <Label className="text-sm">
-                        Unlock Rewards
-                      </Label>
+                      <Label className="text-sm">Unlock Rewards</Label>
                       {isEditMode ? (
                         <Textarea
                           className="!bg-[#0A0E11]  !text-xs"
-                          value={editFormData.unlockRewards}
-                          onChange={(e) => handleInputChange('unlockRewards', e.target.value)}
+                          value={editRestroOfferData.unlockRewards}
+                          onChange={(e) =>
+                            handleOfferInputChange("unlockRewards", e.target.value)
+                          }
+                          name="unlockRewards"
                         />
                       ) : (
                         <div className="min-h-24 px-5 py-3.5 bg-[#0a0e11] border border-[#2e2e2e] rounded-md text-[#c5c5c5] text-xs font-normal">
@@ -404,14 +577,15 @@ const Page = () => {
 
                     {/* Redeem In-Store */}
                     <div className="flex flex-col gap-3">
-                      <Label className="text-sm ">
-                        Redeem In-Store
-                      </Label>
+                      <Label className="text-sm ">Redeem In-Store</Label>
                       {isEditMode ? (
                         <Textarea
                           className="!bg-[#0A0E11] !text-xs"
-                          value={editFormData.redeemInStore}
-                          onChange={(e) => handleInputChange('redeemInStore', e.target.value)}
+                          value={editRestroOfferData.redeemInStore}
+                          onChange={(e) =>
+                            handleOfferInputChange("redeemInStore", e.target.value)
+                          }
+                          name="redeemInStore"
                         />
                       ) : (
                         <div className="min-h-24 px-5 py-3.5 bg-[#0a0e11] border border-[#2e2e2e] rounded-md text-[#c5c5c5] text-xs font-normal">
@@ -424,18 +598,18 @@ const Page = () => {
               </>
             )}
           </AlertDialogHeader>
-          
+
           <AlertDialogFooter className="!justify-center items-center mt-6 gap-3">
             {isEditMode ? (
               <>
-                <AlertDialogCancel 
+                <AlertDialogCancel
                   className="py-3 px-8 h-auto cursor-pointer !bg-transparent rounded-lg !text-[#e4bc84] !border-[#E4BC84] border-1 text-sm min-w-[120px]"
                   onClick={handleCancelEdit}
                 >
                   Cancel
                 </AlertDialogCancel>
                 <Button
-                  onClick={handleSaveEdit}
+                  onClick={handleSaveEditOffer}
                   className="py-3 px-8 h-auto border-0 cursor-pointer rounded-lg !text-black text-sm !bg-[#E4BC84] min-w-[120px] hover:!bg-[#d4a870]"
                 >
                   Save Changes
@@ -443,7 +617,7 @@ const Page = () => {
               </>
             ) : (
               <>
-                <AlertDialogCancel 
+                <AlertDialogCancel
                   className="py-3 px-8 h-auto cursor-pointer !bg-transparent rounded-lg !text-[#e4bc84] !border-[#E4BC84] border-1 text-sm min-w-[120px]"
                   onClick={() => setIsOfferDialogOpen(false)}
                 >

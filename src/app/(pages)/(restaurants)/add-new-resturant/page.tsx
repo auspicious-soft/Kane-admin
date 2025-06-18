@@ -17,14 +17,7 @@ const Page = () => {
     restaurantName: "",
     restaurantLogo: "DummyImageUrl.png",
   });
-  const [restaurantOffers, setRestaurantOffers] = useState({
-    offerName: "",
-    offerImage: "",
-    description: "",
-    visits: "",
-    unlockRewards: "",
-    redeemInStore: "",
-  });
+ 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const { startLoading, stopLoading } = useLoading();
@@ -73,7 +66,7 @@ const Page = () => {
         toast.success(
           response.data.message || "Restaurent Created Successfully. Thank You"
         ); 
-
+        router.push("/restaurants")
       }
        else{
           toast.error(response.data.message || "Error occured while creating the Resaturant")

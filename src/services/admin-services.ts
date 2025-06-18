@@ -19,7 +19,7 @@ export const updateAdminDetails = async (route: string, payload: any) => {
     const axiosInstance= await getAxiosInstance()
     return axiosInstance.put(route, payload)
 }
-
+ 
 // ------------ Resstaurant Page -------------------
 export const getAllRestaurants =  async(route:string) =>{
     const axiosInstance = await getAxiosInstance()
@@ -29,4 +29,28 @@ export const getAllRestaurants =  async(route:string) =>{
 export const CreateRestaurant = async(route:string, payload:any) =>{
     const axiosInstance = await getAxiosInstance();
     return axiosInstance.post(route, payload)
+}
+export const GetRestaurantById = async (route:string) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.get(route)
+}
+
+export const updateRestaurantById = async (route:string, payload:any) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.put(route, payload)
+}
+
+export const CreateRestaurantOffer = async(route:string, payload:any) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.post(route, payload)
+}
+
+export const updateRestaurantOfferById = async (route:string, payload:any) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.put(route, payload)
+}
+
+export const deleteRestaurant = async (route:string) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.delete(route)
 }
