@@ -3,14 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { postApi } from "@/utils/api";
 import Image from "next/image";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { ButtonLoader } from "@/components/ui/loader";
 import { useRouter } from "next/navigation";
 import { useLoading } from "@/context/loading-context";
-import { AUTH_URLS } from "@/constants/apiUrls";
+import { forgotPasswordService } from "@/services/admin-services";
 
 export function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -18,35 +17,34 @@ export function ForgotPassword() {
   const router = useRouter();
   const { startLoading, stopLoading } = useLoading();
 
-  const forgotPassword = async (e: React.FormEvent) => {
+const forgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email) {
       toast.error("Please enter your email address");
       return;
     }
-    
+
     setLoading(true);
     startLoading();
-    
+
     try {
-      const response = await postApi(`${AUTH_URLS.FORGOT_PASSWORD}`, { email });
-      
+      const response = await forgotPasswordService({ email });
+
       if (response.status === 200) {
-        toast.success(response.data.message);
+        toast.success(response.data.message || "Reset link sent successfully");
         router.push("/otp");
       } else {
         toast.error(response.data?.message || "Failed to send reset link");
       }
     } catch (error: any) {
       console.error("Error:", error);
-      toast.error(error?.message || "An error occurred. Please try again.");
+      toast.error(error?.response?.data?.message || "An error occurred. Please try again.");
     } finally {
       setLoading(false);
       stopLoading();
     }
   };
-  
   return (
     <form onSubmit={forgotPassword} className="p-4 md:p-9 space-y-6 w-full max-w-[500px] mx-auto">
       <div className="text-center flex flex-col gap-5 !mb-10">

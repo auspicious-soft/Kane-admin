@@ -4,6 +4,7 @@ import { Mulish } from "next/font/google";
 import { madeTommy } from "@/lib/fonts";
 import "./globals.css";
 import SessionWrapper from "@/components/SessionWrapper"; // ✅ Import wrapper
+import { DataProvider } from '@/components/DataContext';
 
 
 const mulish = Mulish({
@@ -22,10 +23,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-       <body className={clsx('dark', mulish.variable, madeTommy.variable, 'antialiased')}>
+   <html lang="en">
+      <body className={clsx('dark', mulish.variable, madeTommy.variable, 'antialiased')}>
         <SessionWrapper>
-          {children}
+          <DataProvider>
+            {children}
+          </DataProvider>
         </SessionWrapper>
       </body>
     </html>

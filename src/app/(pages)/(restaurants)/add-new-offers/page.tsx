@@ -1,4 +1,5 @@
 "use client";
+import { useData } from "@/components/DataContext";
 import SingleImageUpload from "@/components/restaurants/SingleImageUpload ";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,8 @@ import React, { useState } from "react";
 const Page = () => {
     const [currentImage, setCurrentImage] = useState<File | null>(null);
   
+      const { sharedData } = useData();
+      console.log(sharedData,"sharedData.")
     const handleImageSelect = (file: File) => {
       setCurrentImage(file);
       console.log("Image selected:", file.name);

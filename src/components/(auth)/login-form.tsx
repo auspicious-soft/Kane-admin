@@ -10,6 +10,7 @@ import { Checkbox } from "../ui/checkbox";
 import Image from "next/image";
 import { toast } from "react-hot-toast";
 import { useLoading } from "@/context/loading-context";
+import { loginAction } from "@/actions";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -29,22 +30,34 @@ export function LoginForm() {
     setLoading(true);
      startLoading();
     try {
-      const result = await signIn("credentials", {
-        redirect: false,
-        email,
-        password,
-      });
-  
-      if (result?.error) {
-        console.error("Login error:", result.error);
-        toast.error("Invalid credentials");
-      } else if (result?.ok) {
-        toast.success("Login successful");
-        
-        setTimeout(() => {
-          router.push("/dashboard");
-          router.refresh();                                                       
-        }, 500);
+      // First, validate credentials with your backend
+      const response = await loginAction({ email, password });
+
+      if (response?.success) {
+        // If backend validation succeeds, sign in with NextAuth
+        const result = await signIn("credentials", {
+          email,
+          password,
+          redirect: false,
+        });
+
+        if (result?.error) {
+          toast.error("Authentication failed");
+        } else {
+          toast.success("Logged in successfully");
+          if (response?.data?.user?.role === "admin") {
+            router.push("/dashboard");
+          } else {
+            toast.error("You don't have permission to the dashboard");
+          }
+        }
+      }
+      else if (response?.message === "Invalid password") {
+        toast.error(response?.message);
+      }
+      else {
+        console.error("Login failed: ", response);
+        toast.error("An error occurred during login.");
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -52,7 +65,6 @@ export function LoginForm() {
     } finally {
       setLoading(false);
       stopLoading();
-
     }
   };
 

@@ -29,10 +29,13 @@ import {
   PaginationLink,
 } from "@/components/ui/pagination";
 import Image from "next/image";
+import { getAllRestaurants } from "@/services/admin-services";
+import { useLoading } from "@/context/loading-context";
+import { RESTAURANT_URLS } from "@/constants/apiUrls";
 
-const USERS_PER_PAGE = 12;
+const RESTAURANTS_PER_PAGE = 12;
 
-type User = {
+type Restaurant = {
   id: number;
   restaurantImage: string;
   name: string;
@@ -40,36 +43,54 @@ type User = {
 };
 
 export default function RestaurantlistTable() {
-  const [users, setUsers] = useState<User[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalUsers, setTotalUsers] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [totalRestaurants, setTotalRestaurants] = useState(0);
+  const { startLoading, stopLoading } = useLoading();
 
   useEffect(() => {
-    if (isFirstLoad) setLoading(true);
+    setLoading(true);
+    startLoading();
+    const fetchRestaurants = async () => {
+      try {
+        setError(null);
+        const response = await getAllRestaurants(
+          `${RESTAURANT_URLS.GET_ALL_RESTAURANTS}`
+        );
+        const restaurants = response.data.data;
+        console.log(restaurants, "asdasd");
+        const mappedRestaurants: Restaurant[] = restaurants.map(
+          (restaurant: any, i) => ({
+            id: i + 1,
+            name: restaurant.restaurantName,
+            restaurantImage: "/images/rest-image.png",
+            stamps: restaurant.offerCount.toString(),
+          })
+        );
 
-    const timeout = setTimeout(() => {
-      const allUsers = Array.from({ length: 60 }).map((_, i) => ({
-        id: i + 1,
-        restaurantImage: "/images/rest-image.png",
-        name: "Restaurant Name",
-        stamps: "98",
-      }));
+        const start = (currentPage - 1) * RESTAURANTS_PER_PAGE;
+        const paginated = mappedRestaurants.slice(
+          start,
+          start + RESTAURANTS_PER_PAGE
+        );
 
-      const start = (currentPage - 1) * USERS_PER_PAGE;
-      const paginated = allUsers.slice(start, start + USERS_PER_PAGE);
+        setRestaurants(paginated);
+        setTotalRestaurants(mappedRestaurants.length);
+        setLoading(false);
+        stopLoading();
+      } catch (err) {
+        console.error("Error fetching restaurants:", err);
+        setError("Failed to load restaurants. Please try again later.");
+        setLoading(false);
+        stopLoading();
+      }
+    };
+    fetchRestaurants();
+  }, [currentPage]);
 
-      setUsers(paginated);
-      setTotalUsers(allUsers.length);
-      setLoading(false);
-      setIsFirstLoad(false); // only turns false after the first fetch
-    }, 100);
-
-    return () => clearTimeout(timeout);
-  }, [currentPage, isFirstLoad]);
-
-  const totalPages = Math.ceil(totalUsers / USERS_PER_PAGE);
+  const totalPages = Math.ceil(totalRestaurants / RESTAURANTS_PER_PAGE);
 
   function getPagination(current: number, total: number) {
     const delta = 1;
@@ -126,7 +147,7 @@ export default function RestaurantlistTable() {
                 </td>
               </tr>
             </tbody>
-          ) : users.length === 0 ? (
+          ) : restaurants.length === 0 ? (
             <tbody>
               <tr>
                 <td
@@ -139,17 +160,26 @@ export default function RestaurantlistTable() {
             </tbody>
           ) : (
             <TableBody>
-              {users.map((user, i) => (
+              {restaurants.map((restaurant, i) => (
                 <TableRow
                   key={i}
                   className={`${i % 2 === 0 ? "bg-[#0A0E11]" : "bg-[#182226]"}`}
                 >
-                  <TableCell>#{user.id}</TableCell>
-                  <TableCell> <Image src={user.restaurantImage} alt={user.name} width={100} height={65} className="rounded" /></TableCell>
-                  <TableCell>{user.name}</TableCell>
-                  <TableCell>{user.stamps}</TableCell>
+                  <TableCell>#{restaurant.id}</TableCell>
                   <TableCell>
-                    <Link href={`/restaurants/${user.id}`}>
+                    {" "}
+                    <Image
+                      src={restaurant.restaurantImage}
+                      alt={restaurant.name}
+                      width={100}
+                      height={65}
+                      className="rounded"
+                    />
+                  </TableCell>
+                  <TableCell>{restaurant.name}</TableCell>
+                  <TableCell>{restaurant.stamps}</TableCell>
+                  <TableCell>
+                    <Link href={`/restaurants/${restaurant.id}`}>
                       <Button
                         variant="link"
                         className="text-[#c5c5c5] text-xs p-0 h-auto cursor-pointer"
@@ -186,11 +216,11 @@ export default function RestaurantlistTable() {
         </Table>
       </div>
 
-      {/* Pagination - Show only if not loading AND users exist */}
-      {!loading && users.length > 0 && (
+      {/* Pagination - Show only if not loading AND Restaurants exist */}
+      {!loading && restaurants.length > 0 && (
         <div className="flex justify-between flex-col gap-2 items-center mt-2 text-sm text-gray-400 md:flex-row">
           <div className="flex text-[#c5c5c5] text-xs font-normal">
-            Showing {users.length} results of {totalUsers}
+            Showing {restaurants.length} results of {totalRestaurants}
           </div>
           <Pagination>
             <PaginationContent>
