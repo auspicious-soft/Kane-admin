@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -18,14 +18,24 @@ import {
   PaginationItem,
   PaginationLink,
 } from "@/components/ui/pagination";
+import { useRouter } from "next/navigation";
+import { useLoading } from "@/context/loading-context";
+import { getAllBlockedUsers } from "@/services/admin-services";
+import { USER_URLS } from "@/constants/apiUrls";
+import toast from "react-hot-toast";
+import dummyImg from "../../../public/images/dummyUserPic.png";
 
-const USERS_PER_PAGE = 12;
+
+const USERS_PER_PAGE = 10;
 
 type User = {
+  _id: string;
   id: number;
-  name: string;
+  fullName: string;
   email: string;
-  phone: string;
+  countryCode: string;
+  phoneNumber: string;
+  profilePic: string;
   loyaltyid: string;
   gender: string;
   points: number;
@@ -35,47 +45,70 @@ type User = {
 };
 
 export default function BlockedUsers() {
-  const [users, setUsers] = useState<User[]>([]);
+ const [users, setUsers] = useState<User[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [errors, setErrors] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const { startLoading, stopLoading } = useLoading();
 
-  useEffect(() => {
-    if (isFirstLoad) setLoading(true);
+  const router = useRouter();
+const hasFetched = useRef(false); 
+useEffect(() => {
+    if (hasFetched.current) return;
 
-    const timeout = setTimeout(() => {
-      const allUsers = Array.from({ length: 60 }).map((_, i) => ({
-        id: i + 1,
-        name: i % 2 === 0 ? "John Doe" : "Jane Smith",
-        email: "johndoe@123@gmail.com",
-        phone: "+1234567890",
-        loyaltyid: "4545666",
-        gender: i % 2 === 0 ? "Male" : "Female",
-        points: Math.floor(Math.random() * 1500),
-        status: "Blocked",
-        stamps: "98",
-        date: "05/21/2025",
-      }));
+    const fetchUsers = async () => {
+      try {
+        hasFetched.current = true;
+        setErrors(null);
+        setLoading(true);
+        startLoading();
 
-      const start = (currentPage - 1) * USERS_PER_PAGE;
-      const paginated = allUsers.slice(start, start + USERS_PER_PAGE);
+        const response = await getAllBlockedUsers(
+          `${USER_URLS.GET_ALL_BLOCKED_USERS(currentPage, USERS_PER_PAGE)}`
+        );
+        const apiUsers = response.data.data.users;
+        toast.success(response.data.message || "Users fetched successfully");
 
-      setUsers(paginated);
-      setTotalUsers(allUsers.length);
-      setLoading(false);
-      setIsFirstLoad(false); // only turns false after the first fetch
-    }, 100);
+        const mappedUsers: User[] = apiUsers.map((user: any, i: number) => ({
+          _id: user._id,
+          id: i + 1 + (currentPage - 1) * USERS_PER_PAGE,
+          fullName: user.fullName,
+          email: user.email,
+          countryCode: user.countryCode,
+          phoneNumber: user.phoneNumber,
+          profilePic: user.profilePic,
+          loyaltyid: user.loyaltyid || "N/A",
+          gender: user.gender || "Unknown",
+          points: user.points || 0,
+          status: user.isBlocked ? "Blocked" : "Active",
+          stamps: user.stamps?.toString() || "0",
+          date: user.date || new Date().toLocaleDateString(),
+        }));
 
-    return () => clearTimeout(timeout);
-  }, [currentPage, isFirstLoad]);
+        setUsers(mappedUsers);
+        setTotalUsers(response.data.data.total || mappedUsers.length);
+        setLoading(false);
+        stopLoading();
+      } catch (err) {
+        console.error("Error fetching users:", err);
+        setErrors("Failed to load users. Please try again later.");
+        setLoading(false);
+        stopLoading();
+      } finally {
+        hasFetched.current = false;
+      }
+    };
+
+    fetchUsers();
+  }, [currentPage]);
 
   const totalPages = Math.ceil(totalUsers / USERS_PER_PAGE);
 
   function getPagination(current: number, total: number) {
     const delta = 1;
     const range = [];
-    const rangeWithDots = [];
+    const rangeWithDots: (number | string)[] = [];
     let l: number | undefined = undefined;
 
     for (let i = 1; i <= total; i++) {
@@ -102,7 +135,9 @@ export default function BlockedUsers() {
 
     return rangeWithDots;
   }
-
+const handleViewUser = useCallback((userId: string) => {
+    router.push(`/blocked-users/${userId}`);
+  }, [router]);
   return (
     <div className="flex flex-col gap-2.5">
       <h2 className="text-xl leading-loose">Users List</h2>
@@ -143,7 +178,7 @@ export default function BlockedUsers() {
               </tr>
             </tbody>
           ) : (
-            <TableBody>
+             <TableBody>
               {users.map((user, i) => (
                 <TableRow
                   key={i}
@@ -153,26 +188,28 @@ export default function BlockedUsers() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Avatar className="size-4">
-                        <AvatarImage src="https://github.com/shadcn.png" />
+                        <AvatarImage src={dummyImg.src} />
                         <AvatarFallback>CN</AvatarFallback>
                       </Avatar>
-                      <span>{user.name}</span>
+                      <span>{user.fullName}</span>
                     </div>
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.phone}</TableCell>
+                  <TableCell>{`${
+                    user.countryCode + "-" + user.phoneNumber
+                  }`}</TableCell>
                   <TableCell>{user.points}</TableCell>
                   <TableCell>{user.status}</TableCell>
                   <TableCell>{user.date}</TableCell>
                   <TableCell>
-                    <Link href={`/blocked-users/${user.id}`}>
-                      <Button
-                        variant="link"
-                        className="text-[#c5c5c5] text-xs p-0 h-auto cursor-pointer"
-                      >
-                        View
-                      </Button>
-                    </Link>
+                    <Button
+                      type="button"
+                      onClick={() => handleViewUser(user._id)}
+                      variant="link"
+                      className="text-[#c5c5c5] text-xs p-0 h-auto cursor-pointer"
+                    >
+                      View
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

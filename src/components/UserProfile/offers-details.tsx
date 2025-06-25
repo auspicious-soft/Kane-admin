@@ -15,50 +15,50 @@ import {
   PaginationItem,
   PaginationLink,
 } from "@/components/ui/pagination";
+import { useLoading } from "@/context/loading-context";
 
-const USERS_PER_PAGE = 12;
+const HISTORY_PER_PAGE = 10;
 
-type User = {
-  OffersName: string;
-  freeItem: string;
-  status: string;
+type OffHistory = {
+  id: string;
+  restaurantName: string;
+  offerName: string;
+  type: "earn" | "redeem";
+  date: string;
+  identifier: string;
 };
 
-export default function OffersDetails() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
+type OffersDetailsProps = {
+  offerHistory: OffHistory[];
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
+  totalItems: number;
+  loading: boolean;
+};
+
+export default function OffersDetails({
+  offerHistory,
+  currentPage,
+  setCurrentPage,
+  totalItems,
+  loading,
+}: OffersDetailsProps) {
+  const { startLoading, stopLoading } = useLoading();
 
   useEffect(() => {
-    if (isFirstLoad) setLoading(true);
+    if (loading) {
+      startLoading();
+    } else {
+      stopLoading();
+    }
+  }, [loading, startLoading, stopLoading]);
 
-    const timeout = setTimeout(() => {
-      const allUsers = Array.from({ length: 10 }).map(() => ({
-        OffersName: "Get free coffee",
-        freeItem: "Free Tea",
-        status: "Used",
-      }));
-
-      const start = (currentPage - 1) * USERS_PER_PAGE;
-      const paginated = allUsers.slice(start, start + USERS_PER_PAGE);
-
-      setUsers(paginated);
-      setTotalUsers(allUsers.length);
-      setLoading(false);
-      setIsFirstLoad(false); 
-    }, 100);
-
-    return () => clearTimeout(timeout);
-  }, [currentPage, isFirstLoad]);
-
-  const totalPages = Math.ceil(totalUsers / USERS_PER_PAGE);
+  const totalPages = Math.ceil(totalItems / HISTORY_PER_PAGE);
 
   function getPagination(current: number, total: number) {
     const delta = 1;
     const range = [];
-    const rangeWithDots = [];
+    const rangeWithDots: (number | "...")[] = [];
     let l: number | undefined = undefined;
 
     for (let i = 1; i <= total; i++) {
@@ -93,48 +93,50 @@ export default function OffersDetails() {
           <TableHeader>
             <TableRow className="text-xs">
               <TableHead>S.No</TableHead>
-              <TableHead>Offers Name</TableHead>
-              <TableHead>Free Item</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Restaurant Name</TableHead>
+              <TableHead>Offer Name</TableHead>
+              <TableHead>Action</TableHead>
+              <TableHead>Date</TableHead>
             </TableRow>
           </TableHeader>
           {loading ? (
-            <tbody>
-              <tr>
-                <td
-                  colSpan={8}
+            <TableBody>
+              <TableRow>
+                <TableCell
+                  colSpan={5}
                   className="p-5 text-center text-sm text-gray-400"
                 >
                   Loading...
-                </td>
-              </tr>
-            </tbody>
-          ) : users.length === 0 ? (
-            <tbody>
-              <tr>
-                <td
-                  colSpan={8}
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          ) : offerHistory.length === 0 ? (
+            <TableBody>
+              <TableRow>
+                <TableCell
+                  colSpan={5}
                   className="p-5 text-center text-sm text-gray-400"
                 >
                   No Data found.
-                </td>
-              </tr>
-            </tbody>
+                </TableCell>
+              </TableRow>
+            </TableBody>
           ) : (
             <TableBody>
-              {users.map((user, i) => (
+              {offerHistory.map((history, i) => (
                 <TableRow
-                  key={i}
+                  key={history.id}
                   className={`${i % 2 === 0 ? "bg-[#0A0E11]" : "bg-[#182226]"}`}
                 >
                   <TableCell>
-                    <span>{(currentPage - 1) * USERS_PER_PAGE + i + 1}</span>
+                    <span>{(currentPage - 1) * HISTORY_PER_PAGE + i + 1}</span>
                   </TableCell>
                   <TableCell>
-                    <span>{user.OffersName}</span>
+                    <span>{history.restaurantName}</span>
                   </TableCell>
-                  <TableCell>{user.freeItem}</TableCell>
-                  <TableCell>{user.status}</TableCell>
+                  <TableCell>{history.offerName}</TableCell>
+                  <TableCell>{history.type.charAt(0).toUpperCase() + history.type.slice(1)}</TableCell>
+                  <TableCell>{history.date}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -142,11 +144,10 @@ export default function OffersDetails() {
         </Table>
       </div>
 
-      {/* Pagination - Show only if not loading AND users exist */}
-      {!loading && users.length > 0 && (
+      {!loading && offerHistory.length > 0 && (
         <div className="flex justify-between flex-col gap-2 items-center mt-2 text-sm text-gray-400 md:flex-row">
           <div className="flex text-[#c5c5c5] text-xs font-normal">
-            Showing {users.length} results of {totalUsers}
+            Showing {offerHistory.length} results of {totalItems}
           </div>
           <Pagination>
             <PaginationContent>
@@ -155,7 +156,7 @@ export default function OffersDetails() {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    setCurrentPage((prev) => Math.max(1, prev - 1));
+                    setCurrentPage(Math.max(1, currentPage - 1));
                   }}
                   isActive={false}
                 >
@@ -189,7 +190,7 @@ export default function OffersDetails() {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+                    setCurrentPage(Math.min(totalPages, currentPage + 1));
                   }}
                   isActive={false}
                 >

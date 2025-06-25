@@ -1,4 +1,4 @@
-
+import { GET } from "@/app/api/auth/[...nextauth]/route";
 
 const API_BASE = `/api`;
 const API_BASE_ADMIN = `/api/admin`;
@@ -18,9 +18,20 @@ export const RESTAURANT_URLS = {
   GET_SINGLE_RESTAURANT: (id: string) => `${API_BASE_ADMIN}/restaurants/${id}`,
   UPDATE_RESTAURANT: (id: string) => `${API_BASE_ADMIN}/restaurants/${id}`,
   DELETE_RESTAURANT: (id: string) => `${API_BASE_ADMIN}/restaurants/${id}`,
-  CREATE_RESTAURANTS_OFFER:`${API_BASE_ADMIN}/restaurants-offers`,
+  CREATE_RESTAURANTS_OFFER: `${API_BASE_ADMIN}/restaurants-offers`,
   GET_ALL_RESTAURANTS_OFFERS: `${API_BASE_ADMIN}/restaurants-offers`,
-  GET_SINGLE_RESTAURANT_OFFER: (id: string) => `${API_BASE_ADMIN}/restaurants-offers/${id}`,
-  UPDATE_RESTAURANT_OFFER: (id: string) => `${API_BASE_ADMIN}/restaurants-offers/${id}`,
-}
+  GET_SINGLE_RESTAURANT_OFFER: (id: string) =>
+    `${API_BASE_ADMIN}/restaurants-offers/${id}`,
+  UPDATE_RESTAURANT_OFFER: (id: string) =>
+    `${API_BASE_ADMIN}/restaurants-offers/${id}`,
+};
 
+export const USER_URLS = {
+  GET_ALL_USERS: (page: number = 1, limit: number = 10) =>
+    `${API_BASE_ADMIN}/users?page=${page}&limit=${limit}`,
+  GET_ALL_BLOCKED_USERS: (page: number = 1, limit: number = 10) =>
+    `${API_BASE_ADMIN}/blocked-users?page=${page}&limit=${limit}`,
+  GET_SINGLE_USER: (id: string) => `${API_BASE_ADMIN}/users/${id}`,
+  BLOCK_USER:`${API_BASE_ADMIN}/block-user`,
+  GET_USER_OFFER_AND_REDEMPTION_HISTORY:(page: number = 1, limit: number = 10, id: string, type: string) => `${API_BASE_ADMIN}/users/${id}/history?type=${type}&page=${page}&limit=${limit}`
+};

@@ -1,46 +1,218 @@
+"use client";
 import RedemptionHistory from "@/components/UserProfile/redemption-history";
 import UserProfileCard from "@/components/UserProfile/UserProfileCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OffersDetails from "@/components/UserProfile/offers-details";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useLoading } from "@/context/loading-context";
+import {
+  getUserById,
+  getUserOfferAndRedemptionHistory,
+} from "@/services/admin-services";
+import { USER_URLS } from "@/constants/apiUrls";
 
-interface UserPageProps {
-  params: Promise<{ id: string }>;
-}
+const HISTORY_PER_PAGE = 10;
 
-export default async function UserProfile({ params }: UserPageProps) {
-  const { id } = await params;
+type User = {
+  id: string;
+  name: string;
+  phone: string;
+  fullName: string;
+  email: string;
+  countryCode: string;
+  phoneNumber: string;
+  profilePic: string;
+  loyaltyid: string;
+  gender: string;
+  points: number;
+  status: "Active" | "Blocked";
+  stamps: string;
+  date: string;
+  reasonForBlock: string;
+};
 
-  const user = {
-    id,
-    name: parseInt(id) % 2 === 0 ? "John Doe" : "Jane Smith",
-    email: "johndoe@123@gmail.com",
-    phone: "+1234567890",
-    loyaltyid: "4545666",
-    gender: parseInt(id) % 2 === 0 ? "Male" : "Female",
-    points: Math.floor(Math.random() * 1500),
-    status: (parseInt(id) % 3 === 0 ? "Blocked" : "Active") as
-      | "Blocked"
-      | "Active",
-    stamps: "98",
-    date: "05/21/2025",
-    blockReason:
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry...",
+type RedemptHistory = {
+  type: "earn" | "redeem";
+  id: string;
+  restaurantName: string;
+  freeItem: string;
+  points: number;
+  date: string;
+  identifier: string;
+};
+
+type OffHistory = {
+  id: string;
+  restaurantName: string;
+  offerName: string;
+  type: "earn" | "redeem";
+  date: string;
+  identifier: string;
+};
+
+export default function UserProfile() {
+  const [user, setUser] = useState<User | null>(null);
+  const [errors, setErrors] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [redemptionCurrentPage, setRedemptionCurrentPage] = useState(1);
+  const [offerCurrentPage, setOfferCurrentPage] = useState(1);
+  const { startLoading, stopLoading } = useLoading();
+  const [redemptionHistory, setRedemptionHistory] = useState<RedemptHistory[]>(
+    []
+  );
+  const [offerHistory, setOfferHistory] = useState<OffHistory[]>([]);
+  const [type, setType] = useState<"offer" | "points">("points");
+  const [redemptionTotalItems, setRedemptionTotalItems] = useState(0);
+  const [offerTotalItems, setOfferTotalItems] = useState(0);
+
+  const params = useParams();
+  const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        setErrors(null);
+        setLoading(true);
+        startLoading();
+        const response = await getUserById(
+          `${USER_URLS.GET_SINGLE_USER(id as string)}`
+        );
+        const userDetails = response.data.data;
+
+        const mappedUser: User = {
+          id: userDetails._id,
+          name: userDetails.fullName,
+          phone: userDetails.phoneNumber,
+          fullName: userDetails.fullName,
+          email: userDetails.email,
+          countryCode: userDetails.countryCode,
+          phoneNumber: userDetails.phoneNumber,
+          reasonForBlock: userDetails.reasonForBlock
+            ? userDetails.reasonForBlock
+            : null,
+          profilePic: "",
+          loyaltyid: userDetails.identifier,
+          gender: userDetails.gender,
+          points: userDetails.totalPoints,
+          status: userDetails.isBlocked ? "Blocked" : "Active",
+          stamps: userDetails.stamps || "0",
+          date: userDetails.createdAt
+            ? new Date(userDetails.createdAt).toLocaleDateString()
+            : "",
+        };
+
+        setUser(mappedUser);
+      } catch (error) {
+        console.error(error);
+        setErrors("Failed to fetch user details.");
+      } finally {
+        setLoading(false);
+        stopLoading();
+      }
+    };
+
+    if (id) {
+      fetchUserDetails();
+    }
+  }, [id]);
+
+  const handleTabChange = (value: string) => {
+    if (value === "offer") {
+      setType("offer");
+      setOfferCurrentPage(1);
+    } else if (value === "points") {
+      setType("points");
+      setRedemptionCurrentPage(1);
+    }
   };
+  useEffect(() => {
+    const fetchRedemptionHistory = async () => {
+      try {
+        setLoading(true);
+        startLoading();
+        const currentPage =
+          type === "offer" ? offerCurrentPage : redemptionCurrentPage;
+        const response = await getUserOfferAndRedemptionHistory(
+          USER_URLS.GET_USER_OFFER_AND_REDEMPTION_HISTORY(
+            currentPage,
+            HISTORY_PER_PAGE,
+            id as string,
+            type
+          )
+        );
+        const historyData = response.data.data.history;
 
+        if (type === "offer") {
+          const mappedOfferHistory: OffHistory[] = historyData.map(
+            (item: any) => ({
+              id: item._id,
+              restaurantName: item.offerId.restaurantId.restaurantName,
+              offerName: item.offerId.offerName,
+              type: item.type as "earn" | "redeem",
+              date: new Date(item.createdAt).toLocaleDateString(),
+              identifier: item.identifier,
+            })
+          );
+          setOfferHistory(mappedOfferHistory);
+          setOfferTotalItems(response.data.data.pagination.total);
+        } else {
+          const mappedRedemptionHistory: RedemptHistory[] = historyData.map(
+            (item: any) => ({
+              id: item._id,
+              restaurantName: item.restaurantId.restaurantName,
+              freeItem: item.orderDetails,
+              points: item.points,
+              type: item.type,
+              date: new Date(item.createdAt).toLocaleDateString(),
+              identifier: item.identifier,
+            })
+          );
+          setRedemptionHistory(mappedRedemptionHistory);
+          setRedemptionTotalItems(response.data.data.pagination.total);
+        }
+      } catch (error) {
+        console.error(error);
+        setErrors("Failed to fetch history.");
+      } finally {
+        setLoading(false);
+        stopLoading();
+      }
+    };
+
+    if (id) {
+      fetchRedemptionHistory();
+    }
+  }, [id, redemptionCurrentPage, offerCurrentPage, type]);
   return (
     <>
-      <UserProfileCard user={user} />
+      <UserProfileCard user={user} userId={id} />
 
-      <Tabs defaultValue="redemptionHistory" className="w-full">
+      <Tabs
+        defaultValue="points"
+        className="w-full"
+        onValueChange={handleTabChange}
+      >
         <TabsList>
-          <TabsTrigger value="redemptionHistory">Redemption History</TabsTrigger>
-          <TabsTrigger value="0ffersdetails">Offers Details</TabsTrigger>
+          <TabsTrigger value="points">Redemption History</TabsTrigger>
+          <TabsTrigger value="offer">Offers Details</TabsTrigger>
         </TabsList>
-        <TabsContent value="redemptionHistory">
-          <RedemptionHistory />
+        <TabsContent value="points">
+          <RedemptionHistory
+            redemptionHistory={redemptionHistory}
+            currentPage={redemptionCurrentPage}
+            setCurrentPage={setRedemptionCurrentPage}
+            totalItems={redemptionTotalItems}
+            loading={loading}
+          />
         </TabsContent>
-        <TabsContent value="0ffersdetails">
-          <OffersDetails />
+        <TabsContent value="offer">
+          <OffersDetails
+            offerHistory={offerHistory}
+            currentPage={offerCurrentPage}
+            setCurrentPage={setOfferCurrentPage}
+            totalItems={offerTotalItems}
+            loading={loading}
+          />
         </TabsContent>
       </Tabs>
     </>

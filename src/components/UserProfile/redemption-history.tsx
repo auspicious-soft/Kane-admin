@@ -15,56 +15,51 @@ import {
   PaginationItem,
   PaginationLink,
 } from "@/components/ui/pagination";
+import { useLoading } from "@/context/loading-context";
 
-const USERS_PER_PAGE = 12;
+const HISTORY_PER_PAGE = 10;
 
-type User = {
-  resturantName: string;
+type RedemptHistory = {
+  id: string;
+  restaurantName: string;
   freeItem: string;
-  redeemPoints: string;
   points: number;
-  stamps: string;
+  type: "earn" | "redeem";
   date: string;
+  identifier: string;
 };
 
-export default function RedemptionHistory() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
+type RedemptionHistoryProps = {
+  redemptionHistory: RedemptHistory[];
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
+  totalItems: number;
+  loading: boolean;
+};
+
+export default function RedemptionHistory({
+  redemptionHistory,
+  currentPage,
+  setCurrentPage,
+  totalItems,
+  loading,
+}: RedemptionHistoryProps) {
+  const { startLoading, stopLoading } = useLoading();
 
   useEffect(() => {
-    if (isFirstLoad) setLoading(true);
+    if (loading) {
+      startLoading();
+    } else {
+      stopLoading();
+    }
+  }, [loading, startLoading, stopLoading]);
 
-    const timeout = setTimeout(() => {
-      const allUsers = Array.from({ length: 10 }).map(() => ({
-        resturantName: "Orchid Row",
-        freeItem: "Free Tea",
-        redeemPoints: "100",
-        points: Math.floor(Math.random() * 1500),
-        stamps: "98",
-        date: "05/21/2025",
-      }));
-
-      const start = (currentPage - 1) * USERS_PER_PAGE;
-      const paginated = allUsers.slice(start, start + USERS_PER_PAGE);
-
-      setUsers(paginated);
-      setTotalUsers(allUsers.length);
-      setLoading(false);
-      setIsFirstLoad(false); 
-    }, 100);
-
-    return () => clearTimeout(timeout);
-  }, [currentPage, isFirstLoad]);
-
-  const totalPages = Math.ceil(totalUsers / USERS_PER_PAGE);
+  const totalPages = Math.ceil(totalItems / HISTORY_PER_PAGE);
 
   function getPagination(current: number, total: number) {
     const delta = 1;
     const range = [];
-    const rangeWithDots = [];
+    const rangeWithDots: (number | "...")[] = [];
     let l: number | undefined = undefined;
 
     for (let i = 1; i <= total; i++) {
@@ -99,50 +94,52 @@ export default function RedemptionHistory() {
           <TableHeader>
             <TableRow className="text-xs">
               <TableHead>S.No</TableHead>
-              <TableHead>Resturant Name</TableHead>
-              <TableHead>Free Item</TableHead>
-              <TableHead>Redeem Points</TableHead>
-              <TableHead>Register Date</TableHead>
+              <TableHead>Restaurant Name</TableHead>
+              <TableHead>Item</TableHead>
+              <TableHead>Points</TableHead>
+              <TableHead>Date</TableHead>
             </TableRow>
           </TableHeader>
           {loading ? (
-            <tbody>
-              <tr>
-                <td
-                  colSpan={8}
+            <TableBody>
+              <TableRow>
+                <TableCell
+                  colSpan={5}
                   className="p-5 text-center text-sm text-gray-400"
                 >
                   Loading...
-                </td>
-              </tr>
-            </tbody>
-          ) : users.length === 0 ? (
-            <tbody>
-              <tr>
-                <td
-                  colSpan={8}
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          ) : redemptionHistory.length === 0 ? (
+            <TableBody>
+              <TableRow>
+                <TableCell
+                  colSpan={5}
                   className="p-5 text-center text-sm text-gray-400"
                 >
                   No Data found.
-                </td>
-              </tr>
-            </tbody>
+                </TableCell>
+              </TableRow>
+            </TableBody>
           ) : (
             <TableBody>
-              {users.map((user, i) => (
+              {redemptionHistory.map((history, i) => (
                 <TableRow
-                  key={i}
+                  key={history.id}
                   className={`${i % 2 === 0 ? "bg-[#0A0E11]" : "bg-[#182226]"}`}
                 >
                   <TableCell>
-                    <span>{(currentPage - 1) * USERS_PER_PAGE + i + 1}</span>
+                    <span>{(currentPage - 1) * HISTORY_PER_PAGE + i + 1}</span>
                   </TableCell>
                   <TableCell>
-                    <span>{user.resturantName}</span>
+                    <span>{history.restaurantName}</span>
                   </TableCell>
-                  <TableCell>{user.freeItem}</TableCell>
-                  <TableCell>{user.redeemPoints}</TableCell>
-                  <TableCell>{user.date}</TableCell>
+                  <TableCell>{history.freeItem}</TableCell>
+                  <TableCell>
+                    {history.type === "earn" ? `+${history.points}` : `-${history.points}`}
+                  </TableCell>
+                  <TableCell>{history.date}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -150,11 +147,10 @@ export default function RedemptionHistory() {
         </Table>
       </div>
 
-      {/* Pagination - Show only if not loading AND users exist */}
-      {!loading && users.length > 0 && (
+      {!loading && redemptionHistory.length > 0 && (
         <div className="flex justify-between flex-col gap-2 items-center mt-2 text-sm text-gray-400 md:flex-row">
           <div className="flex text-[#c5c5c5] text-xs font-normal">
-            Showing {users.length} results of {totalUsers}
+            Showing {redemptionHistory.length} results of {totalItems}
           </div>
           <Pagination>
             <PaginationContent>
@@ -163,7 +159,7 @@ export default function RedemptionHistory() {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    setCurrentPage((prev) => Math.max(1, prev - 1));
+                    setCurrentPage(Math.max(1, currentPage - 1));
                   }}
                   isActive={false}
                 >
@@ -197,7 +193,7 @@ export default function RedemptionHistory() {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+                    setCurrentPage(Math.min(totalPages, currentPage + 1));
                   }}
                   isActive={false}
                 >

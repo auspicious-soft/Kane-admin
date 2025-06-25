@@ -54,3 +54,32 @@ export const deleteRestaurant = async (route:string) =>{
     const axiosInstance = await getAxiosInstance();
     return axiosInstance.delete(route)
 }
+
+
+// -------------------- Users Page ---------------------------
+
+export const getAllUsers =  async(route:string) =>{
+    const axiosInstance = await getAxiosInstance()
+    return axiosInstance.get(route)
+}
+
+export const getAllBlockedUsers =  async(route:string) =>{
+    const axiosInstance = await getAxiosInstance()
+    return axiosInstance.get(route)
+}
+
+
+export const getUserById =  async(route:string) =>{
+    const axiosInstance = await getAxiosInstance()
+    return axiosInstance.get(route)
+}
+
+export const blockUser = async (route:string, payload:any) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.put(route, payload)
+}
+
+export const getUserOfferAndRedemptionHistory =  async(route:string) =>{
+    const axiosInstance = await getAxiosInstance()
+    return axiosInstance.get(route)
+}
