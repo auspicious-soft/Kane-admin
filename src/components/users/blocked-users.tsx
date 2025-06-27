@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import Link from "next/link";
+import { useState, useEffect, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Table,
@@ -53,13 +52,10 @@ export default function BlockedUsers() {
   const { startLoading, stopLoading } = useLoading();
 
   const router = useRouter();
-const hasFetched = useRef(false); 
-useEffect(() => {
-    if (hasFetched.current) return;
 
+useEffect(() => {
     const fetchUsers = async () => {
       try {
-        hasFetched.current = true;
         setErrors(null);
         setLoading(true);
         startLoading();
@@ -96,7 +92,8 @@ useEffect(() => {
         setLoading(false);
         stopLoading();
       } finally {
-        hasFetched.current = false;
+         setLoading(false);
+        stopLoading();
       }
     };
 

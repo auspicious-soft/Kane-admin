@@ -4,7 +4,7 @@ import Image from "next/image";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,20 +73,11 @@ const Page = () => {
     redeemInStore: "",
     unlockRewards: "",
   });
-const hasFetched = useRef(false);
-  const currentId = useRef(id);
 
 useEffect(() => {
     if (!id) return;
 
-    if (currentId.current !== id) {
-      hasFetched.current = false;
-      currentId.current = id;
-    }
-
     const fetchRestaurantData = async () => {
-      if (hasFetched.current) return; 
-      hasFetched.current = true;
 
       try {
         setError(null);

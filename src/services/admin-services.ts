@@ -83,3 +83,44 @@ export const getUserOfferAndRedemptionHistory =  async(route:string) =>{
     const axiosInstance = await getAxiosInstance()
     return axiosInstance.get(route)
 }
+
+// ----------------------- Policies Page ---------------------------
+
+export const createPolicies = async(route:string, payload:any) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.post(route, payload)
+}
+
+export const GetPolicies = async(route:string) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.get(route)
+}
+
+
+
+// ----------------------- Achievements Page --------------------------
+
+export const createAchievement = async(route:string, payload:any) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.post(route,payload)
+}
+
+export const getAllAchievements = async(route:string) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.get(route)
+}
+
+export const getAchievementById = async(route:string) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.get(route)
+}
+
+export const updateAchievementById = async (route:string, payload:any)=>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.put(route,payload)
+}
+
+export const deleteAchivementById = async(route:string)=>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.delete(route)
+}

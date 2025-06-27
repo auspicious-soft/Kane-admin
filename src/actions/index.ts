@@ -67,3 +67,96 @@ export const generateSignedUrlForProfile = async (fileName: string, fileType: st
     throw error;
   }
 };
+
+
+export const generateSignedUrlForRestaurants = async (fileName: string, fileType: string) => {
+  const uploadParams = {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: `banners/${fileName}`,
+    ContentType: fileType,
+    acl: "public-read",
+  };
+  try {
+    const command = new PutObjectCommand(uploadParams);
+    const signedUrl = await getSignedUrl(await createS3Client(), command);
+    // const signedUrl = await getSignedUrl(s3, command, { expiresIn: 900 });
+    return { signedUrl, key: uploadParams.Key };
+  } catch (error) {
+    console.error("Error generating signed URL:", error);
+    throw error;
+  }
+};
+
+export const generateSignedUrlForRestaurantOffers = async (fileName: string, fileType: string) => {
+  const uploadParams = {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: `banners/${fileName}`,
+    ContentType: fileType,
+    acl: "public-read",
+  };
+  try {
+    const command = new PutObjectCommand(uploadParams);
+    const signedUrl = await getSignedUrl(await createS3Client(), command);
+    // const signedUrl = await getSignedUrl(s3, command, { expiresIn: 900 });
+    return { signedUrl, key: uploadParams.Key };
+  } catch (error) {
+    console.error("Error generating signed URL:", error);
+    throw error;
+  }
+};
+
+export const deleteFileFromS3 = async (imageKey: string) => {
+  const params = {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: imageKey,
+  };
+  try {
+    const s3Client = await createS3Client();
+    const command = new DeleteObjectCommand(params);
+    const response = await s3Client.send(command);
+    return response;
+  } catch (error) {
+    console.error("Error deleting file from S3:", error);
+    throw error;
+  }
+};
+
+
+export const getFileWithMetadata = async (fileKey: string) => {
+  if (!fileKey) {
+    throw new Error("fileKey is required");
+  }
+  try {
+    const s3 = await createS3Client();
+
+    const headData = await s3.send(
+      new HeadObjectCommand({
+        Bucket: process.env.AWS_BUCKET_NAME!,
+        Key: fileKey,
+      })
+    );
+    const metadata = headData.Metadata || {};
+    if (metadata.timestamps) {
+      try {
+        const firstDecode = Buffer.from(metadata.timestamps, "base64").toString("utf-8");
+        const secondDecode = Buffer.from(firstDecode, "base64").toString("utf-8");
+        metadata.timestamps = JSON.parse(secondDecode);
+      } catch (error) {
+        console.error("Error decoding metadata timestamps:", error);
+      }
+    }
+    const fileUrl = await getImageClientS3URL(fileKey);
+    return {
+      fileUrl,
+      metadata,
+    };
+  } catch (error) {
+    console.error("❌ Error fetching file metadata:", error);
+
+    if (error.name === "NotFound") {
+      throw new Error("❌ File not found in S3. Check the fileKey and bucket.");
+    }
+
+    throw new Error("❌ Error fetching file and metadata");
+  }
+};

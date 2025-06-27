@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import Link from "next/link";
+import { useState, useEffect, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Table,
@@ -52,13 +51,9 @@ export default function   UsersList() {
   const { startLoading, stopLoading } = useLoading();
 
   const router = useRouter();
-   const hasFetched = useRef(false);
 useEffect(() => {
-    if (hasFetched.current) return;
-
     const fetchUsers = async () => {
       try {
-        hasFetched.current = true; // Mark as fetched
         setErrors(null);
         setLoading(true);
         startLoading();
@@ -95,7 +90,8 @@ useEffect(() => {
         setLoading(false);
         stopLoading();
       } finally {
-        hasFetched.current = false; // Reset for next page change
+         setLoading(false);
+        stopLoading();
       }
     };
 

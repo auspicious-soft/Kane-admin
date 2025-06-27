@@ -14,7 +14,9 @@ import {
   DashboardIcon,
   RestaurantsIcon,
   UserIcon,
+  Policies,
 } from "@/lib/svg";
+import policyIcon from ".././../public/images/mynaui_clipboard-solid.png"
 import { NavProjects } from "./nav-projects";
 import { redirect } from "next/dist/server/api-utils";
 import {signOut} from "next-auth/react";
@@ -49,8 +51,13 @@ const data = {
     },
     {
       title: "Achievements",
-      url: "/achievements",
+      url: "/all-achievements",
       icon: AchievementsIcon,
+    },
+     {
+      title: "Policies",
+      url: "/policies",
+      icon: Policies,
     },
   ],
   projects: [

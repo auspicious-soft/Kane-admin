@@ -35,3 +35,18 @@ export const USER_URLS = {
   BLOCK_USER:`${API_BASE_ADMIN}/block-user`,
   GET_USER_OFFER_AND_REDEMPTION_HISTORY:(page: number = 1, limit: number = 10, id: string, type: string) => `${API_BASE_ADMIN}/users/${id}/history?type=${type}&page=${page}&limit=${limit}`
 };
+
+
+export const POLICIES_URL = {
+  CREATE_POLICIES:`${API_BASE_ADMIN}/settings`,
+  GET_POLCIIES:(type: string) =>`${API_BASE_ADMIN}/settings?type=${type}`
+}
+
+export const ACHIEVEMENT_URLS = {
+  CREATE_ACHIVEMENT:`${API_BASE_ADMIN}/achievements`,
+  GET_ALL_ACHIEVEMENTS:`${API_BASE_ADMIN}/achievements`,
+  GET_SINGLE_ACHIVEMENT : (id: string) =>`${API_BASE_ADMIN}/achievements/${id}`,
+  UPDATE_ACHIEVEMENT:(id: string) => `${API_BASE_ADMIN}/achievements/${id}`,
+  DELETE_ACHIEVEMENT:(id: string) =>`${API_BASE_ADMIN}/delete-achievement`
+
+}
