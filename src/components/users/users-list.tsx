@@ -23,10 +23,11 @@ import { getAllUsers } from "@/services/admin-services";
 import { USER_URLS } from "@/constants/apiUrls";
 import toast from "react-hot-toast";
 import dummyImg from "../../../public/images/dummyUserPic.png";
+import { getFileWithMetadata } from "@/actions";
 
 const USERS_PER_PAGE = 10;
 
-type User = {
+type User = { 
   _id: string;
   id: number;
   fullName: string;
@@ -51,52 +52,72 @@ export default function   UsersList() {
   const { startLoading, stopLoading } = useLoading();
 
   const router = useRouter();
+
 useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setErrors(null);
-        setLoading(true);
-        startLoading();
+  const fetchUsers = async () => {
+    try {
+      setErrors(null);
+      setLoading(true);
+      startLoading();
 
-        const response = await getAllUsers(
-          `${USER_URLS.GET_ALL_USERS(currentPage, USERS_PER_PAGE)}`
-        );
-        const apiUsers = response.data.data.users;
-        toast.success(response.data.message || "Users fetched successfully");
+      const response = await getAllUsers(
+        `${USER_URLS.GET_ALL_USERS(currentPage, USERS_PER_PAGE)}`
+      );
+      const apiUsers = response.data.data.users;
+      const mappedUsers: User[] = await Promise.all(
+        apiUsers.map(async (user: any, i: number) => {
+          let imageUrl = "/images/user-placeholder.png"; // Default static image
 
-        const mappedUsers: User[] = apiUsers.map((user: any, i: number) => ({
-          _id: user._id,
-          id: i + 1 + (currentPage - 1) * USERS_PER_PAGE,
-          fullName: user.fullName,
-          email: user.email,
-          countryCode: user.countryCode,
-          phoneNumber: user.phoneNumber,
-          profilePic: user.profilePic,
-          loyaltyid: user.loyaltyid || "N/A",
-          gender: user.gender || "Unknown",
-          points: user.points || 0,
-          status: user.isBlocked ? "Blocked" : "Active",
-          stamps: user.stamps?.toString() || "0",
-          date: user.date || new Date().toLocaleDateString(),
-        }));
+          // Check if user has a profile picture
+          if (user.profilePicture && user.profilePicture !== "") {
+            try {
+              const { fileUrl } = await getFileWithMetadata(user.profilePicture);
+              imageUrl = fileUrl; // Use the fetched S3 URL
+            } catch (error) {
+              console.error(
+                `Error fetching image for user ${user._id}:`,
+                error
+              );
+              // Fallback to static image if fetching fails
+              imageUrl = "/images/user-placeholder.png";
+            }
+          }
 
-        setUsers(mappedUsers);
-        setTotalUsers(response.data.data.total || mappedUsers.length);
-        setLoading(false);
-        stopLoading();
-      } catch (err) {
-        console.error("Error fetching users:", err);
-        setErrors("Failed to load users. Please try again later.");
-        setLoading(false);
-        stopLoading();
-      } finally {
-         setLoading(false);
-        stopLoading();
-      }
-    };
+          return {
+            _id: user._id,
+            id: i + 1 + (currentPage - 1) * USERS_PER_PAGE,
+            fullName: user.fullName,
+            email: user.email,
+            countryCode: user.countryCode,
+            phoneNumber: user.phoneNumber,
+            profilePic: imageUrl,
+            loyaltyid: user.loyaltyid || "N/A",
+            gender: user.gender || "Unknown",
+            points: user.points || 0,
+            status: user.isBlocked ? "Blocked" : "Active",
+            stamps: user.stamps?.toString() || "0",
+            date: user.date || new Date().toLocaleDateString(),
+          };
+        })
+      );
 
-    fetchUsers();
-  }, [currentPage]);
+      setUsers(mappedUsers);
+      setTotalUsers(response.data.data.total || mappedUsers.length);
+      setLoading(false);
+      stopLoading();
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      setErrors("Failed to load users. Please try again later.");
+      setLoading(false);
+      stopLoading();
+    } finally {
+      setLoading(false);
+      stopLoading();
+    }
+  };
+
+  fetchUsers();
+}, [currentPage]);
   const totalPages = Math.ceil(totalUsers / USERS_PER_PAGE);
 
   function getPagination(current: number, total: number) {
@@ -182,7 +203,7 @@ const handleViewUser = useCallback((userId: string) => {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Avatar className="size-4">
-                        <AvatarImage src={dummyImg.src} />
+                        <AvatarImage src={user.profilePic || dummyImg.src} />
                         <AvatarFallback>CN</AvatarFallback>
                       </Avatar>
                       <span>{user.fullName}</span>

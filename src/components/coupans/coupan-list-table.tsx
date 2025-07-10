@@ -27,66 +27,67 @@ import {
   PaginationItem,
   PaginationLink,
 } from "@/components/ui/pagination";
+import Image from "next/image";
 import {
-  deleteAchivementById,
-  getAllAchievements,
+  deleteCouponById,
+  deleteRestaurant,
+  getAllCoupons,
+  getAllRestaurants,
 } from "@/services/admin-services";
 import { useLoading } from "@/context/loading-context";
-import { ACHIEVEMENT_URLS } from "@/constants/apiUrls";
+import { COUPON_URLS } from "@/constants/apiUrls";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
-const ACHIEVEMENTS_PER_PAGE = 12;
+const COUPONS_PER_PAGE = 10;
 
-type Achievement = {
+type Coupon = {
   sNo: number;
-  id: number;
   _id: number;
-  achievementName: string;
-  restaurantName: string;
-  rewardValue: string;
-  stamps: string;
+  id: number;
+  offerName: string;
+  couponName: string;
+  type: string;
+  createdOn: string;
+  expiryDate: string;
 };
 
-export default function AchievementListTable() {
+export default function CouponlistTable() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [totalcoupons, setTotalcoupons] = useState(0);
   const { startLoading, stopLoading } = useLoading();
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [totalAchivements, setTotalAchievements]= useState(0);
   const router = useRouter();
 
- useEffect(() => {
+  useEffect(() => {
     setLoading(true);
     startLoading();
-    const fetchAchievements = async () => {
+    const fetchOffers = async () => {
       try {
         setError(null);
-        const response = await getAllAchievements(
-          `${ACHIEVEMENT_URLS.GET_ALL_ACHIEVEMENTS}`
-        );
-        const achivementsS = response.data.data;
-        console.log(achivementsS,"asdad")
-        const mappedAchievements: Achievement[] = achivementsS.map(
-          (achievement: any, i) => ({
-            _id: achievement._id,
-            sNo: i + 1,
-            achievementName: achievement.achievementName,
-            rewardValue:achievement.rewardValue,
-            stamps: achievement.stamps.toString(),
-            restaurantName:achievement.assignRestaurant.restaurantName
-          })
-        );
+        const response = await getAllCoupons(`${COUPON_URLS.GET_ALL_COUPON}`);
+        const coupons = response.data.data;
+        const mappedCoupons: Coupon[] = coupons.map((coupon: any, i) => ({
+          _id: coupon._id,
+          id: i + 1,
+          offerName: coupon.offerName ? coupon.offerName : "",
+          couponName: coupon.couponName ? coupon.couponName : "",
+          type: coupon.type ? coupon.type : "",
+          createdOn: coupon.createdAt
+            ? new Date(coupon.createdAt).toLocaleDateString("en-GB")
+            : "",
+          expiryDate: coupon.expiry
+            ? new Date(coupon.expiry).toLocaleDateString("en-GB")
+            : "",
+        }));
 
-        const start = (currentPage - 1) * ACHIEVEMENTS_PER_PAGE;
-        const paginated = mappedAchievements.slice(
-          start,
-          start + ACHIEVEMENTS_PER_PAGE
-        );
+        const start = (currentPage - 1) * COUPONS_PER_PAGE;
+        const paginated = mappedCoupons.slice(start, start + COUPONS_PER_PAGE);
 
-        setAchievements(paginated);
-        setTotalAchievements(mappedAchievements.length);
+        setCoupons(paginated);
+        setTotalcoupons(mappedCoupons.length);
         setLoading(false);
         stopLoading();
       } catch (err) {
@@ -96,12 +97,10 @@ export default function AchievementListTable() {
         stopLoading();
       }
     };
-    fetchAchievements();
+    fetchOffers();
   }, [currentPage]);
-  console.log(achievements, "achieveve");
 
-
-  const totalPages = Math.ceil(totalAchivements / ACHIEVEMENTS_PER_PAGE);
+  const totalPages = Math.ceil(totalcoupons / COUPONS_PER_PAGE);
 
   function getPagination(current: number, total: number) {
     const delta = 1;
@@ -134,28 +133,28 @@ export default function AchievementListTable() {
     return rangeWithDots;
   }
 
-  const handleDelete = async (achievementId: string) => {
+  const handleDelete = async (couponId: string) => {
     try {
       setLoading(true);
       startLoading();
-      await deleteAchivementById(
-        `${ACHIEVEMENT_URLS.DELETE_ACHIEVEMENT(achievementId as string)}`
+
+      await deleteCouponById(
+        `${COUPON_URLS.DELETE_COUPON(couponId as string)}`
       );
-        setAchievements((prevAchievement) =>
-        prevAchievement.filter(
-          (achievement) => String(achievement._id) !== achievementId
-        )
+      setCoupons((prevCoupons) =>
+        prevCoupons.filter((coupon) => String(coupon._id) !== couponId)
       );
-      setTotalAchievements((prev) => prev - 1);
+      setTotalcoupons((prev) => prev - 1);
       setLoading(false);
       stopLoading();
     } catch (error) {
-      console.error("Error deleting restaurant:", error);
-      setError("Failed to delete restaurant. Please try again later.");
+      console.error("Error Deleting Coupon:", error);
+      setError("Failed to delete Coupon. Please try again later.");
       setLoading(false);
       stopLoading();
     }
   };
+
   return (
     <>
       <div className="rounded bg-[#182226] border border-[#2e2e2e] text-[#c5c5c5] overflow-x-auto">
@@ -163,10 +162,11 @@ export default function AchievementListTable() {
           <TableHeader>
             <TableRow className="text-xs">
               <TableHead>S.No</TableHead>
-              <TableHead>Achievement Name</TableHead>
-              <TableHead>Restaurant Name</TableHead>
-              <TableHead>Reward value</TableHead>
-              <TableHead>Number of Stamps</TableHead>
+              <TableHead>Coupon Name</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Created On</TableHead>
+              <TableHead>Expiry Date</TableHead>
+
               <TableHead className="w-36">Action</TableHead>
             </TableRow>
           </TableHeader>
@@ -181,36 +181,33 @@ export default function AchievementListTable() {
                 </td>
               </tr>
             </tbody>
-          ) : achievements.length === 0 ? (
+          ) : coupons.length === 0 ? (
             <tbody>
               <tr>
                 <td
                   colSpan={8}
                   className="p-5 text-center text-sm text-gray-400"
                 >
-                  No Achievements found.
+                  No Restaurants found.
                 </td>
               </tr>
             </tbody>
           ) : (
             <TableBody>
-              {achievements.map((achievement, i) => (
+              {coupons.map((coupon, i) => (
                 <TableRow
                   key={i}
                   className={`${i % 2 === 0 ? "bg-[#0A0E11]" : "bg-[#182226]"}`}
                 >
-                  <TableCell>#{achievement.sNo}</TableCell>
-                  <TableCell>{achievement.achievementName}</TableCell>
-                  <TableCell>{achievement.restaurantName}</TableCell>
-                  <TableCell>{achievement.rewardValue}</TableCell>
-
-                  <TableCell>{achievement.stamps}</TableCell>
+                  <TableCell>#{coupon.id}</TableCell>
+                  <TableCell>{coupon.couponName}</TableCell>
+                  <TableCell>{coupon.type}</TableCell>
+                  <TableCell>{coupon.createdOn}</TableCell>
+                  <TableCell>{coupon.expiryDate}</TableCell>
                   <TableCell>
                     {/* <Link href={`/restaurants/${restaurant._id}`}> */}
                     <Button
-                      onClick={() =>
-                        router.push(`/all-achievements/${achievement._id}`)
-                      }
+                      onClick={() => router.push(`/all-coupons/${coupon._id}`)}
                       variant="link"
                       className="text-[#c5c5c5] text-xs p-0 h-auto cursor-pointer"
                     >
@@ -225,7 +222,7 @@ export default function AchievementListTable() {
                         <AlertDialogHeader>
                           <AlertDialogTitle className="hide" />
                           <AlertDialogDescription className="text-center text-white text-lg font-normal opacity-80 md:!max-w-[220px] m-auto">
-                            Are you sure you want to delete this Achievement?
+                            Are you sure you want to delete this Coupon?
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter className="!justify-center items-center mt-5">
@@ -234,7 +231,7 @@ export default function AchievementListTable() {
                           </AlertDialogCancel>
                           <AlertDialogAction
                             className="w-full shrink-1 py-3 px-7 h-auto border-0 cursor-pointer rounded-lg !text-white text-sm !bg-[#b40000]"
-                             onClick={() => handleDelete(String(achievement._id))}
+                            onClick={() => handleDelete(String(coupon._id))}
                           >
                             Yes, Delete
                           </AlertDialogAction>
@@ -250,10 +247,10 @@ export default function AchievementListTable() {
       </div>
 
       {/* Pagination - Show only if not loading AND Restaurants exist */}
-      {!loading && achievements.length > 0 && (
+      {!loading && coupons.length > 0 && (
         <div className="flex justify-between flex-col gap-2 items-center mt-2 text-sm text-gray-400 md:flex-row">
           <div className="flex text-[#c5c5c5] text-xs font-normal">
-            Showing {achievements.length} results of {totalAchivements}
+            Showing {coupons.length} results of {totalcoupons}
           </div>
           <Pagination>
             <PaginationContent>

@@ -124,3 +124,41 @@ export const deleteAchivementById = async(route:string)=>{
     const axiosInstance = await getAxiosInstance();
     return axiosInstance.delete(route)
 }
+
+
+//  -------------------- Coupon Page -------------------------------
+
+
+export const createCoupon = async(route:string, payload:any) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.post(route,payload)
+}
+
+
+export const getAllCoupons = async(route:string) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.get(route)
+}
+
+export const getCouponById = async(route:string) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.get(route)
+}
+
+export const updateCouponById = async (route:string, payload:any)=>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.put(route,payload)
+}
+
+export const deleteCouponById = async(route:string)=>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.delete(route)
+}
+
+// ------------------ DashBoard ----------------------
+
+export const getDashboardData = async(route:string) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.get(route)
+}
+

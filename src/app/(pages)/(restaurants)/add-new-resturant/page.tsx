@@ -5,21 +5,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useData } from "@/components/DataContext";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { CreateRestaurant } from "@/services/admin-services";
 import { RESTAURANT_URLS } from "@/constants/apiUrls";
 import { useLoading } from "@/context/loading-context";
+import { validateImageFile } from "@/utils/fileValidation";
+import { deleteFileFromS3, generateSignedUrlForRestaurants } from "@/actions";
 
 const Page = () => {
-  const [currentImage, setCurrentImage] = useState<File | null>(null);
   const [restaurantDetails, setRestaurantDetails] = useState({
     restaurantName: "",
-    restaurantLogo: "DummyImageUrl.png",
+    restaurantLogo: "",
   });
- 
+
+  const [isUploading, setIsUploading] = useState(false);
+  const[loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const { startLoading, stopLoading } = useLoading();
 
   const { setSharedData } = useData();
@@ -29,62 +31,82 @@ const Page = () => {
     setSharedData({ restaurantDetails });
     router.push("/add-new-offers");
   };
-  const handleImageSelect = (file: File) => {
-    setCurrentImage(file);
-    console.log("Image selected:", file.name);
-  };
 
-  const handleImageRemove = () => {
-    setCurrentImage(null);
-    console.log("Image removed");
+  const handleImageUploaded = (key: string) => {
+    setRestaurantDetails((prev) => ({
+      ...prev,
+      restaurantLogo: key,
+    }));
   };
 
   const handleRestaurantSave = async () => {
-    if (
-      !restaurantDetails.restaurantName &&
-      restaurantDetails.restaurantLogo
-    ) {
+    if (!restaurantDetails.restaurantName || !restaurantDetails.restaurantLogo) {
       toast.error("Restaurant name and logo are required.");
+      return;
     }
+
     setLoading(true);
     startLoading();
+    setIsUploading(true);
+
     try {
       setError(null);
       const response = await CreateRestaurant(
         `${RESTAURANT_URLS.CREATE_RESTAURANTS}`,
-        { restaurantDetails:{
-          restaurantName:restaurantDetails.restaurantName,
-          image:restaurantDetails.restaurantLogo
-        } }
+        {
+          restaurantDetails: {
+            restaurantName: restaurantDetails.restaurantName,
+            image: restaurantDetails.restaurantLogo,
+          },
+        }
       );
+
       if (response.status === 201) {
-        console.log(response);
         setRestaurantDetails({
           restaurantName: "",
-          restaurantLogo: "DummyImageUrl.png",
-        })
+          restaurantLogo: "",
+        });
         toast.success(
-          response.data.message || "Restaurent Created Successfully. Thank You"
-        ); 
-        router.push("/restaurants")
-      }
-       else{
-          toast.error(response.data.message || "Error occured while creating the Resaturant")
+          response.data.message || "Restaurant Created Successfully. Thank You"
+        );
+        router.push("/restaurants");
+      } else {
+        toast.error(
+          response.data.message || "Error occurred while creating the Restaurant"
+        );
+
+        // Cleanup uploaded image on failure
+        if (restaurantDetails.restaurantLogo) {
+          try {
+            await deleteFileFromS3(restaurantDetails.restaurantLogo);
+          } catch (deleteError) {
+            console.error("Failed to delete uploaded image:", deleteError);
+          }
         }
+      }
     } catch (error) {
-       console.error("Error fetching restaurants:", error);
-        setError("Failed to load restaurants. Please try again later.");
-        setLoading(false);
-        stopLoading();
-    }
-    finally{
+      console.error("Error creating restaurant:", error);
+      toast.error("Something went wrong");
+      setError("Failed to load restaurants. Please try again later.");
+
+      // Cleanup uploaded image on failure
+      if (restaurantDetails.restaurantLogo) {
+        try {
+          await deleteFileFromS3(restaurantDetails.restaurantLogo);
+        } catch (deleteError) {
+          console.error("Failed to delete uploaded image:", deleteError);
+        }
+      }
+    } finally {
       setLoading(false);
-        stopLoading();
+      setIsUploading(false);
+      stopLoading();
     }
   };
+
   return (
     <>
-      <div className="bg-[#0a0e11] rounded border border-[#2e2e2e] p-4 md:py-5 md:px-7  flex flex-col gap-2.5">
+      <div className="bg-[#0a0e11] rounded border border-[#2e2e2e] p-4 md:py-5 md:px-7 flex flex-col gap-2.5">
         <h2 className="text-xl leading-loose">Restaurant Details</h2>
         <form>
           <div className="flex flex-col lg:flex-row gap-10">
@@ -92,16 +114,10 @@ const Page = () => {
               <div className="flex flex-col gap-3">
                 <Label className="text-sm">Restaurant logo</Label>
                 <SingleImageUpload
-                  onImageSelect={handleImageSelect}
-                  onImageRemove={handleImageRemove}
+                  onImageUploaded={handleImageUploaded}
                   placeholder="Upload Restaurant Logo"
                   className="rounded-[50%]"
                 />
-                {currentImage && (
-                  <div className="text-xs text-gray-400 mt-2 hidden">
-                    Selected image: {currentImage.name}
-                  </div>
-                )}
               </div>
             </div>
             <div className="flex flex-col gap-7 w-full">
@@ -123,12 +139,13 @@ const Page = () => {
                   }
                 />
               </div>
-              <Button 
-              className="max-w-max px-[30px] py-2.5 bg-[#e4bc84] rounded inline-flex justify-center items-center gap-2 text-[#0a0e11] text-sm font-normal"
-              type="button"
-              onClick={handleRestaurantSave}
+              <Button
+                className="max-w-max px-[30px] py-2.5 bg-[#e4bc84] rounded inline-flex justify-center items-center gap-2 text-[#0a0e11] text-sm font-normal"
+                type="button"
+                onClick={handleRestaurantSave}
+                disabled={isUploading}
               >
-                Save
+                {isUploading ? "Uploading..." : "Save"}
               </Button>
             </div>
           </div>

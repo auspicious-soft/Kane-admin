@@ -1,3 +1,5 @@
+// app/layout.tsx
+
 import clsx from "clsx";
 import type { Metadata } from "next";
 import { Mulish } from "next/font/google";
@@ -21,24 +23,25 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <body className={clsx('dark', mulish.variable, madeTommy.variable, 'antialiased')}>
-      <LoadingProvider>
-        <Toaster position="top-right" />
-        <SidebarProvider>
-          <AppSidebar />
-          <SidebarInset>
-            <AppHeader />
-            <div className="flex flex-1 flex-col gap-4 py-6 px-4 md:py-10 md:px-7 md:gap-7">
-              {children}
-            </div>
-          </SidebarInset>
-        </SidebarProvider>
-      </LoadingProvider>
-    </body>
+    <html lang="en">
+      <body className={clsx('dark', mulish.variable, madeTommy.variable, 'antialiased')}>
+        <LoadingProvider>
+          <Toaster position="top-right" />
+          <SidebarProvider>
+            <AppSidebar />
+            <SidebarInset>
+              <AppHeader />
+              <div className="flex flex-1 flex-col gap-4 py-6 px-4 md:py-10 md:px-7 md:gap-7">
+                {children}
+              </div>
+            </SidebarInset>
+          </SidebarProvider>
+        </LoadingProvider>
+      </body>
+    </html>
   );
 }
-

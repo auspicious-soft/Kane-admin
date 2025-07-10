@@ -11,6 +11,7 @@ import {
   getUserOfferAndRedemptionHistory,
 } from "@/services/admin-services";
 import { USER_URLS } from "@/constants/apiUrls";
+import { getFileWithMetadata } from "@/actions";
 
 const HISTORY_PER_PAGE = 10;
 
@@ -78,7 +79,22 @@ export default function UserProfile() {
           `${USER_URLS.GET_SINGLE_USER(id as string)}`
         );
         const userDetails = response.data.data;
+ let imageUrl = "/images/rest-image.png"; // Default static image
 
+            // Check if restaurant has an image key
+            if (userDetails.profilePicture) {
+              try {
+                const { fileUrl } = await getFileWithMetadata(userDetails.profilePicture);
+                imageUrl = fileUrl; // Use the fetched S3 URL
+              } catch (error) {
+                console.error(
+                  `Error fetching image for restaurant ${userDetails._id}:`,
+                  error
+                );
+                // Fallback to static image if fetching fails
+                imageUrl = "/images/rest-image.png";
+              }
+            }
         const mappedUser: User = {
           id: userDetails._id,
           name: userDetails.fullName,
@@ -90,7 +106,7 @@ export default function UserProfile() {
           reasonForBlock: userDetails.reasonForBlock
             ? userDetails.reasonForBlock
             : null,
-          profilePic: "",
+          profilePic: imageUrl,
           loyaltyid: userDetails.identifier,
           gender: userDetails.gender,
           points: userDetails.totalPoints,

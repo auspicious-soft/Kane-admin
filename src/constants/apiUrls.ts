@@ -32,21 +32,38 @@ export const USER_URLS = {
   GET_ALL_BLOCKED_USERS: (page: number = 1, limit: number = 10) =>
     `${API_BASE_ADMIN}/blocked-users?page=${page}&limit=${limit}`,
   GET_SINGLE_USER: (id: string) => `${API_BASE_ADMIN}/users/${id}`,
-  BLOCK_USER:`${API_BASE_ADMIN}/block-user`,
-  GET_USER_OFFER_AND_REDEMPTION_HISTORY:(page: number = 1, limit: number = 10, id: string, type: string) => `${API_BASE_ADMIN}/users/${id}/history?type=${type}&page=${page}&limit=${limit}`
+  BLOCK_USER: `${API_BASE_ADMIN}/block-user`,
+  GET_USER_OFFER_AND_REDEMPTION_HISTORY: (
+    page: number = 1,
+    limit: number = 10,
+    id: string,
+    type: string
+  ) =>
+    `${API_BASE_ADMIN}/users/${id}/history?type=${type}&page=${page}&limit=${limit}`,
 };
 
-
 export const POLICIES_URL = {
-  CREATE_POLICIES:`${API_BASE_ADMIN}/settings`,
-  GET_POLCIIES:(type: string) =>`${API_BASE_ADMIN}/settings?type=${type}`
-}
+  CREATE_POLICIES: `${API_BASE_ADMIN}/settings`,
+  GET_POLCIIES: (type: string) => `${API_BASE_ADMIN}/settings?type=${type}`,
+};
 
 export const ACHIEVEMENT_URLS = {
-  CREATE_ACHIVEMENT:`${API_BASE_ADMIN}/achievements`,
-  GET_ALL_ACHIEVEMENTS:`${API_BASE_ADMIN}/achievements`,
-  GET_SINGLE_ACHIVEMENT : (id: string) =>`${API_BASE_ADMIN}/achievements/${id}`,
-  UPDATE_ACHIEVEMENT:(id: string) => `${API_BASE_ADMIN}/achievements/${id}`,
-  DELETE_ACHIEVEMENT:(id: string) =>`${API_BASE_ADMIN}/delete-achievement`
+  CREATE_ACHIVEMENT: `${API_BASE_ADMIN}/achievements`,
+  GET_ALL_ACHIEVEMENTS: `${API_BASE_ADMIN}/achievements`,
+  GET_SINGLE_ACHIVEMENT: (id: string) => `${API_BASE_ADMIN}/achievements/${id}`,
+  UPDATE_ACHIEVEMENT: (id: string) => `${API_BASE_ADMIN}/achievements/${id}`,
+  DELETE_ACHIEVEMENT: (id: string) => `${API_BASE_ADMIN}/achievements/${id}`,
+};
 
-}
+export const COUPON_URLS = {
+  CREATE_COUPON: `${API_BASE_ADMIN}/coupons`,
+  GET_ALL_COUPON: `${API_BASE_ADMIN}/coupons`,
+  GET_SINGLE_COUPON: (id: string) => `${API_BASE_ADMIN}/coupons/${id}`,
+  UPDATE_COUPON: (id: string) => `${API_BASE_ADMIN}/coupons/${id}`,
+  DELETE_COUPON: (id: string) => `${API_BASE_ADMIN}/coupons/${id}`,
+};
+
+export const DASHBOARD_URL = {
+  GET_DASHBOARD_DATA: (page = 1, limit = 10) =>
+    `${API_BASE_ADMIN}/dashboard?page=${page}&limit=${limit}`,
+};

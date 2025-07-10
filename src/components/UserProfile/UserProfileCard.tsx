@@ -35,6 +35,7 @@ interface UserType {
   date: string;
   blockReason?: string;
   reasonForBlock:string;
+  profilePic:string;
 }
 
 interface UserProfileCardProps {
@@ -118,7 +119,7 @@ export default function UserProfileCard({
       <div className="w-full md:w-1/4">
         <div className="bg-[#182226] rounded border border-[#2e2e2e] px-5 text-center py-7.5">
           <Avatar className="size-20 md:size-40 m-auto">
-            <AvatarImage src={dummyImg.src} />
+            <AvatarImage src={user.profilePic? user.profilePic : dummyImg.src} />
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
           <h3 className="text-lg font-medium mt-4 mb-1">{user.fullName}</h3>

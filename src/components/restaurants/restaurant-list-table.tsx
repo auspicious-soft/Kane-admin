@@ -33,13 +33,14 @@ import { useLoading } from "@/context/loading-context";
 import { RESTAURANT_URLS } from "@/constants/apiUrls";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { getFileWithMetadata } from "@/actions";
 
 const RESTAURANTS_PER_PAGE = 12;
 
 type Restaurant = {
   _id: number;
   id: number;
-  restaurantImage: string;
+  image: string;
   name: string;
   stamps: string;
 };
@@ -63,14 +64,32 @@ export default function RestaurantlistTable() {
           `${RESTAURANT_URLS.GET_ALL_RESTAURANTS}`
         );
         const restaurants = response.data.data;
-        toast.success(response.data.message || "Restaurants fetched successfully")
-        const mappedRestaurants: Restaurant[] = restaurants.map(
-          (restaurant: any, i) => ({
-            _id: restaurant._id,
-            id: i + 1,
-            name: restaurant.restaurantName,
-            restaurantImage: "/images/rest-image.png",
-            stamps: restaurant.offerCount.toString(),
+        const mappedRestaurants: Restaurant[] = await Promise.all(
+          restaurants.map(async (restaurant: any, i: number) => {
+            let imageUrl = "/images/rest-image.png"; // Default static image
+
+            // Check if restaurant has an image key
+            if (restaurant.image) {
+              try {
+                const { fileUrl } = await getFileWithMetadata(restaurant.image);
+                imageUrl = fileUrl; // Use the fetched S3 URL
+              } catch (error) {
+                console.error(
+                  `Error fetching image for restaurant ${restaurant._id}:`,
+                  error
+                );
+                // Fallback to static image if fetching fails
+                imageUrl = "/images/rest-image.png";
+              }
+            }
+
+            return {
+              _id: restaurant._id,
+              id: i + 1,
+              name: restaurant.restaurantName,
+              image: imageUrl,
+              stamps: restaurant.offerCount.toString(),
+            };
           })
         );
 
@@ -93,7 +112,6 @@ export default function RestaurantlistTable() {
     };
     fetchRestaurants();
   }, [currentPage]);
-
 
   const totalPages = Math.ceil(totalRestaurants / RESTAURANTS_PER_PAGE);
 
@@ -162,9 +180,9 @@ export default function RestaurantlistTable() {
               <TableHead>ID</TableHead>
               <TableHead>Restaurant Image</TableHead>
               <TableHead>Restaurant Name</TableHead>
-              <TableHead>Stamps</TableHead>
+              <TableHead>Offers</TableHead>
               <TableHead className="w-36">Action</TableHead>
-            </TableRow>
+            </TableRow> 
           </TableHeader>
           {loading ? (
             <tbody>
@@ -193,13 +211,14 @@ export default function RestaurantlistTable() {
               {restaurants.map((restaurant, i) => (
                 <TableRow
                   key={i}
-                  className={`${i % 2 === 0 ? "bg-[#0A0E11]" : "bg-[#182226]"}`}
+                  className={`${i % 2 === 0 ? "bg-[#0A0E11]" : "bg-[#182226]"} min-h-8 max-w-1`}
                 >
                   <TableCell>#{restaurant.id}</TableCell>
-                  <TableCell>
+                  <TableCell
+                  className="min-h-1 min-w-1" >
                     {" "}
                     <Image
-                      src={restaurant.restaurantImage}
+                      src={restaurant.image}
                       alt={restaurant.name}
                       width={100}
                       height={65}
@@ -235,8 +254,9 @@ export default function RestaurantlistTable() {
                           <AlertDialogCancel className="w-full shrink-1 py-3 px-7 h-auto border-0 cursor-pointer !bg-[#e4bc84] rounded-lg !text-[#0a0e11] text-sm">
                             Cancel
                           </AlertDialogCancel>
-                          <AlertDialogAction className="w-full shrink-1 py-3 px-7 h-auto border-0 cursor-pointer rounded-lg !text-white text-sm !bg-[#b40000]"
-                          onClick={() => handleDelete(String(restaurant._id))}
+                          <AlertDialogAction
+                            className="w-full shrink-1 py-3 px-7 h-auto border-0 cursor-pointer rounded-lg !text-white text-sm !bg-[#b40000]"
+                            onClick={() => handleDelete(String(restaurant._id))}
                           >
                             Yes, Delete
                           </AlertDialogAction>

@@ -15,6 +15,7 @@ import {
   RestaurantsIcon,
   UserIcon,
   Policies,
+  CoupanIcon,
 } from "@/lib/svg";
 import policyIcon from ".././../public/images/mynaui_clipboard-solid.png"
 import { NavProjects } from "./nav-projects";
@@ -58,6 +59,11 @@ const data = {
       title: "Policies",
       url: "/policies",
       icon: Policies,
+    },
+     {
+      title: "Coupans",
+      url: "/all-coupons",
+      icon: CoupanIcon,
     },
   ],
   projects: [

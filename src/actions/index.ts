@@ -72,7 +72,7 @@ export const generateSignedUrlForProfile = async (fileName: string, fileType: st
 export const generateSignedUrlForRestaurants = async (fileName: string, fileType: string) => {
   const uploadParams = {
     Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `banners/${fileName}`,
+    Key: `restaurants/${fileName}`,
     ContentType: fileType,
     acl: "public-read",
   };
@@ -90,7 +90,7 @@ export const generateSignedUrlForRestaurants = async (fileName: string, fileType
 export const generateSignedUrlForRestaurantOffers = async (fileName: string, fileType: string) => {
   const uploadParams = {
     Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `banners/${fileName}`,
+    Key: `restaurant-offers/${fileName}`,
     ContentType: fileType,
     acl: "public-read",
   };

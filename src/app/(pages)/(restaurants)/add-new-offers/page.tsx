@@ -1,6 +1,8 @@
 // pages/add-new-offers/page.tsx
 "use client";
+import { deleteFileFromS3 } from "@/actions";
 import { useData } from "@/components/DataContext";
+import SingleImageUploadOffers from "@/components/restaurants/offerSingleImageUpload";
 import SingleImageUpload from "@/components/restaurants/SingleImageUpload ";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RESTAURANT_URLS } from "@/constants/apiUrls";
 import { useLoading } from "@/context/loading-context";
-import { CreateRestaurant, CreateRestaurantOffer } from "@/services/admin-services";
+import {
+  CreateRestaurant,
+  CreateRestaurantOffer,
+} from "@/services/admin-services";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, Suspense } from "react"; // Import Suspense
 import toast from "react-hot-toast";
@@ -27,11 +32,13 @@ const AddNewOfferContent = () => {
   const searchParams = useSearchParams();
   const source = searchParams.get("source");
   const id = searchParams.get("id");
+  const [isUploading, setIsUploading] = useState(false);
   const [currentImage, setCurrentImage] = useState<File | null>(null);
+  const [currentImageKey, setCurrentImageKey] = useState<string | null>(null);
   const [restaurantOffers, setRestaurantOffers] = useState<Offer[]>([
     {
       offerName: "",
-      image: "dummyOfferImage.png",
+      image: "",
       description: "",
       visits: "",
       unlockRewards: "",
@@ -49,8 +56,15 @@ const AddNewOfferContent = () => {
     console.log("Image selected:", file.name);
   };
 
+ const handleImageUploaded = (key: string) => {
+    setCurrentImageKey(key);
+    setRestaurantOffers((prev) => [{ ...prev[0], image: key }]);
+    console.log("Image uploaded with key:", key);
+  };
+
   const handleImageRemove = () => {
-    setCurrentImage(null);
+    setCurrentImageKey(null);
+    setRestaurantOffers((prev) => [{ ...prev[0], image: "" }]);
     console.log("Image removed");
   };
 
@@ -109,19 +123,37 @@ const AddNewOfferContent = () => {
           response.data.message ||
             "Error occurred while creating the restaurant."
         );
+        if (restaurantOffers[0].image) {
+          try {
+            await deleteFileFromS3(restaurantOffers[0].image);
+            setCurrentImageKey(null);
+            setRestaurantOffers((prev) => [{ ...prev[0], image: "" }]);
+          } catch (deleteError) {
+            console.error("Failed to delete offer image:", deleteError);
+          }
+        }
       }
     } catch (error) {
       console.error("Error creating restaurant:", error);
       setError("Failed to create restaurant. Please try again later.");
+      if (restaurantOffers[0].image) {
+        try {
+          await deleteFileFromS3(restaurantOffers[0].image);
+          setCurrentImageKey(null);
+          setRestaurantOffers((prev) => [{ ...prev[0], image: "" }]);
+        } catch (deleteError) {
+          console.error("Failed to delete offer image:", deleteError);
+        }
+      }
     } finally {
       setLoading(false);
       stopLoading();
     }
   };
 
-  const handleCreateOffer = async () => {
-    if (!id && source !== "offer") {
-      toast.error("Invalid Id and source");
+ const handleCreateOffer = async () => {
+    if (!id || source !== "offer") {
+      toast.error("Invalid Id or source");
       return;
     }
 
@@ -133,9 +165,12 @@ const AddNewOfferContent = () => {
       toast.error("All fields in the offer are required.");
       return;
     }
+
     setLoading(true);
+    setIsUploading(true);
     startLoading();
     try {
+      setError(null);
       const response = await CreateRestaurantOffer(
         `${RESTAURANT_URLS.CREATE_RESTAURANTS_OFFER}`,
         {
@@ -146,17 +181,50 @@ const AddNewOfferContent = () => {
       );
       if (response.status === 200) {
         toast.success(response.data.message || "Offer Created Successfully.");
+        setRestaurantOffers([
+          {
+            offerName: "",
+            image: "",
+            description: "",
+            visits: "",
+            unlockRewards: "",
+            redeemInStore: "",
+          },
+        ]);
+        setCurrentImageKey(null);
         router.push(`/restaurants/${id}`);
       } else {
         toast.error(
           response.data.message || "Error occurred while creating the offer."
         );
+        // Cleanup uploaded offer image on failure
+        if (restaurantOffers[0].image) {
+          try {
+            await deleteFileFromS3(restaurantOffers[0].image);
+            setCurrentImageKey(null);
+            setRestaurantOffers((prev) => [{ ...prev[0], image: "" }]);
+          } catch (deleteError) {
+            console.error("Failed to delete offer image:", deleteError);
+          }
+        }
       }
     } catch (error) {
-      console.error("Error creating restaurant:", error);
-      setError("Failed to create restaurant. Please try again later.");
+      console.error("Error creating offer:", error);
+      toast.error("Something went wrong");
+      setError("Failed to create offer. Please try again later.");
+      // Cleanup uploaded offer image on failure
+      if (restaurantOffers[0].image) {
+        try {
+          await deleteFileFromS3(restaurantOffers[0].image);
+          setCurrentImageKey(null);
+          setRestaurantOffers((prev) => [{ ...prev[0], image: "" }]);
+        } catch (deleteError) {
+          console.error("Failed to delete offer image:", deleteError);
+        }
+      }
     } finally {
       setLoading(false);
+      setIsUploading(false);
       stopLoading();
     }
   };
@@ -168,15 +236,14 @@ const AddNewOfferContent = () => {
         <div className="flex flex-col lg:flex-row gap-10">
           <div className="w-full max-w-[330px] md:min-w-[330px]">
             <div className="flex flex-col gap-3">
-              <SingleImageUpload
-                onImageSelect={handleImageSelect}
-                onImageRemove={handleImageRemove}
-                placeholder="Upload Restaurant Logo"
+              <SingleImageUploadOffers
+               onImageUploaded={handleImageUploaded}
+                placeholder="Upload Offer Logo"
                 className="rounded-[50%]"
               />
-              {currentImage && (
+              {currentImageKey && (
                 <div className="text-xs text-gray-400 mt-2 hidden">
-                  Selected image: {currentImage.name}
+                  Uploaded image key: {currentImageKey}
                 </div>
               )}
             </div>

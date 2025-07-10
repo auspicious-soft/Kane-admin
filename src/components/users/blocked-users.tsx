@@ -64,8 +64,6 @@ useEffect(() => {
           `${USER_URLS.GET_ALL_BLOCKED_USERS(currentPage, USERS_PER_PAGE)}`
         );
         const apiUsers = response.data.data.users;
-        toast.success(response.data.message || "Users fetched successfully");
-
         const mappedUsers: User[] = apiUsers.map((user: any, i: number) => ({
           _id: user._id,
           id: i + 1 + (currentPage - 1) * USERS_PER_PAGE,

@@ -1,7 +1,6 @@
 "use client";
 import SingleImageUpload from "@/components/restaurants/SingleImageUpload ";
 import Image from "next/image";
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import React, { useEffect, useState } from "react";
@@ -24,9 +23,11 @@ import {
   updateRestaurantOfferById,
 } from "@/services/admin-services";
 import { RESTAURANT_URLS } from "@/constants/apiUrls";
-import { useParams, useRouter } from "next/navigation"; 
+import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import dummyImg from "../../../../../../public/images/auth-image.jpg";
+import { getFileWithMetadata } from "@/actions";
+import SingleImageUploadOffers from "@/components/restaurants/offerSingleImageUpload";
 
 interface Offer {
   _id: string;
@@ -38,7 +39,6 @@ interface Offer {
   unlockRewards: string;
 }
 
-// Define the Restaurant type
 interface Restaurant {
   restaurantName: string;
   logo: string;
@@ -47,7 +47,6 @@ interface Restaurant {
 const Page = () => {
   const params = useParams();
   const id = params?.id;
-  const [currentImage, setCurrentImage] = useState<File | null>(null);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -62,9 +61,8 @@ const Page = () => {
   const router = useRouter();
   const [editFormData, setEditFormData] = useState({
     restaurantName: "",
-    image: "dummyImage2.png",
+    image: "",
   });
-
   const [editRestroOfferData, setEditRestroOfferData] = useState({
     offerName: "",
     image: "offerDummyImage2.png",
@@ -74,53 +72,100 @@ const Page = () => {
     unlockRewards: "",
   });
 
-useEffect(() => {
+  const [isRestaurantImageLoading, setIsRestaurantImageLoading] =
+    useState(true);
+  const [isOfferImageLoading, setIsOfferImageLoading] = useState(true);
+
+  useEffect(() => {
     if (!id) return;
 
     const fetchRestaurantData = async () => {
-
       try {
         setError(null);
         startLoading();
         setLoading(true);
+        setIsRestaurantImageLoading(true);
+        setIsOfferImageLoading(true);
+        setIsOfferImageLoading(true);
         const response = await GetRestaurantById(
           RESTAURANT_URLS.GET_SINGLE_RESTAURANT(id as string)
         );
         if (response.status === 200) {
           const restData = response.data.data.restaurant;
           const restOfferData = response.data.data.offers;
-          setRestaurantData(restData);
-          setRestaurantOffersData(restOfferData);
+          let imageUrl = "/images/rest-image.png";
+          if (restData.image) {
+            try {
+              const { fileUrl } = await getFileWithMetadata(restData.image);
+              imageUrl = fileUrl;
+            } catch (error) {
+              console.error(
+                `Error fetching image for restaurant ${restData._id}:`,
+                error
+              );
+              imageUrl = "/images/rest-image.png";
+            }
+          }
+          setRestaurantData({
+            restaurantName: restData.restaurantName,
+            logo: imageUrl,
+          });
+          const processedOffers = await Promise.all(
+            restOfferData.map(async (offer: Offer) => {
+              let offerImageUrl = "/images/rest-image.png";
+              if (offer.image) {
+                try {
+                  const { fileUrl } = await getFileWithMetadata(offer.image);
+                  offerImageUrl = fileUrl;
+                } catch (error) {
+                  console.error(
+                    `Error fetching image for offer ${offer._id}:`,
+                    error
+                  );
+                  offerImageUrl = "/images/rest-image.png";
+                }
+              }
+              return {
+                ...offer,
+                image: offerImageUrl,
+              };
+            })
+          );
+
+          setRestaurantOffersData(processedOffers);
           setEditFormData({
-            restaurantName: restData.restaurantName || '',
-            image: restData.logo || '',
+            restaurantName: restData.restaurantName || "",
+            image: imageUrl || "", // Store S3 key instead of URL
           });
           setEditRestroOfferData({
-            offerName: restOfferData.offerName || '',
-            image: restOfferData.image || '',
-            description: restOfferData.description || '',
-            visits: restOfferData.visits || '',
-            redeemInStore: restOfferData.redeemInStore || '',
-            unlockRewards: restOfferData.unlockRewards || '',
+            offerName: "",
+            image: "offerDummyImage2.png",
+            description: "",
+            visits: "",
+            redeemInStore: "",
+            unlockRewards: "",
           });
           toast.success(
-            response.data.message || 'Restaurant details fetched successfully'
+            response.data.message || "Restaurant details fetched successfully"
           );
         } else {
-          toast.error(response.data.message || 'Failed to fetch details.');
+          toast.error(response.data.message || "Failed to fetch details.");
         }
       } catch (error) {
-        console.error('Error fetching restaurant:', error);
-        setError('Failed to fetch restaurant data.');
-        toast.error('Failed to fetch restaurant data.');
+        console.error("Error fetching restaurant:", error);
+        setError("Failed to fetch restaurant data.");
+        toast.error("Failed to fetch restaurant data.");
       } finally {
         setLoading(false);
         stopLoading();
+        setIsRestaurantImageLoading(false);
+        setIsOfferImageLoading(false);
       }
     };
 
     fetchRestaurantData();
   }, [id]);
+
 
   const handleCardClick = (id: string) => {
     const offer = restaurantOffersData.find((offer) => offer._id === id);
@@ -141,7 +186,10 @@ useEffect(() => {
 
   const handleCancelEdit = () => {
     setIsEditMode(false);
-    setCurrentImage(null);
+    setEditFormData({
+      restaurantName: restaurantData.restaurantName,
+      image: restaurantData.logo,
+    });
   };
 
   const handleSaveEditOffer = async () => {
@@ -162,13 +210,30 @@ useEffect(() => {
       if (response.status === 200) {
         toast.success(response.data.message || "Offer updated successfully.");
 
+        // Fetch the updated image URL after saving
+        let updatedImageUrl = editRestroOfferData.image;
+        if (editRestroOfferData.image) {
+          try {
+            const { fileUrl } = await getFileWithMetadata(
+              editRestroOfferData.image
+            );
+            updatedImageUrl = fileUrl;
+          } catch (error) {
+            console.error(
+              `Error fetching updated image for offer ${selectedOffer._id}:`,
+              error
+            );
+            updatedImageUrl = "/images/rest-image.png";
+          }
+        }
+
         setRestaurantOffersData((prev) =>
           prev.map((offer) =>
             offer._id === selectedOffer._id
               ? {
                   ...offer,
                   ...editRestroOfferData,
-                  image: editRestroOfferData.image,
+                  image: updatedImageUrl,
                 }
               : offer
           )
@@ -179,7 +244,7 @@ useEffect(() => {
             ? {
                 ...prev,
                 ...editRestroOfferData,
-                image: editRestroOfferData.image,
+                image: updatedImageUrl,
               }
             : prev
         );
@@ -193,7 +258,6 @@ useEffect(() => {
           unlockRewards: "",
         });
         setIsEditMode(false);
-        setCurrentImage(null);
         setIsOfferDialogOpen(false);
       } else {
         toast.error(
@@ -209,22 +273,18 @@ useEffect(() => {
     }
   };
 
-  const handleImageSelect = (file: File) => {
-    setCurrentImage(file);
+  const handleImageUploaded = (key: string) => {
     setEditFormData((prev) => ({
       ...prev,
-      logo: file.name,
+      image: key,
     }));
-    console.log("Image selected:", file.name);
   };
 
-  const handleImageRemove = () => {
-    setCurrentImage(null);
-    setEditFormData((prev) => ({
+  const handleOfferImageUploaded = (key: string) => {
+    setEditRestroOfferData((prev) => ({
       ...prev,
-      logo: "",
+      image: key,
     }));
-    console.log("Image removed");
   };
 
   const handleEditClick = () => {
@@ -235,39 +295,54 @@ useEffect(() => {
     if (!id) return;
     setLoading(true);
     startLoading();
+    setIsRestaurantImageLoading(true);
     try {
       const response = await updateRestaurantById(
         `${RESTAURANT_URLS.UPDATE_RESTAURANT(id as string)}`,
         {
-          ...editFormData,
+          restaurantName: editFormData.restaurantName,
+          image: editFormData.image,
         }
       );
       if (response.status === 200) {
         toast.success(
           response.data.message || "Restaurant Updated Successfully."
         );
-        setRestaurantData((prev) => ({
-          ...prev,
-          ...editFormData,
-        }));
-        setEditFormData({
-          restaurantName: "",
-          image: "dummyImage2.png",
+        let imageUrl = "";
+        if (editFormData.image) {
+          try {
+            const { fileUrl } = await getFileWithMetadata(editFormData.image);
+            imageUrl = fileUrl;
+          } catch (error) {
+            console.error(
+              `Error fetching image for restaurant ${editFormData.restaurantName}:`,
+              error
+            );
+            imageUrl = "/images/rest-image.png";
+          }
+        }
+        setRestaurantData({
+          restaurantName: editFormData.restaurantName,
+          logo: editFormData.image,
         });
+        setEditFormData({
+          restaurantName: editFormData.restaurantName,
+          image: imageUrl,
+        });
+        setIsEditMode(false);
       } else {
         toast.error(
           response.data.message ||
-            "An error occured while updating the restaurant"
+            "An error occurred while updating the restaurant"
         );
       }
     } catch (error) {
       console.error("Error updating restaurants:", error);
       setError("Failed to update restaurants. Please try again later.");
-      setLoading(false);
-      stopLoading();
     } finally {
       setLoading(false);
       stopLoading();
+      setIsRestaurantImageLoading(false);
     }
   };
 
@@ -278,12 +353,15 @@ useEffect(() => {
     }));
   };
 
-  const handleOfferInputChange = (field: keyof typeof editRestroOfferData, value: string) => {
-  setEditRestroOfferData((prev) => ({
-    ...prev,
-    [field]: value,
-  }));
-};
+  const handleOfferInputChange = (
+    field: keyof typeof editRestroOfferData,
+    value: string
+  ) => {
+    setEditRestroOfferData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
   return (
     <>
@@ -295,13 +373,41 @@ useEffect(() => {
                 <Label htmlFor="name" className="text-sm">
                   Restaurant logo
                 </Label>
-                <Image
-                  src={"/images/auth-image.jpg"}
-                  alt="Restaurant Logo"
-                  width={250}
-                  height={250}
-                  className="rounded-[10px] object-cover w-[250px] h-[250px]"
-                />
+                {isRestaurantImageLoading ? (
+                  <div className="w-[250px] h-[250px] rounded-[10px] bg-gray-200 flex items-center justify-center">
+                    <svg
+                      className="animate-spin h-8 w-8 text-gray-500"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z"
+                      />
+                    </svg>
+                  </div>
+                ) : (
+                  <Image
+                    src={editFormData.image || "/images/rest-image.png"}
+                    alt="Restaurant Logo"
+                    width={250}
+                    height={250}
+                    className="rounded-[10px] object-cover w-[250px] h-[250px]"
+                    onError={(e) => {
+                      e.currentTarget.src = "/images/rest-image.png";
+                    }}
+                  />
+                )}
               </div>
             </div>
             <div className="flex flex-col gap-7 w-full">
@@ -333,15 +439,9 @@ useEffect(() => {
                     </h2>
                     <div className="flex flex-col gap-3 max-w-[250px] w-full m-auto">
                       <SingleImageUpload
-                        onImageSelect={handleImageSelect}
-                        onImageRemove={handleImageRemove}
+                        onImageUploaded={handleImageUploaded}
                         placeholder="Upload Restaurant Logo"
                       />
-                      {currentImage && (
-                        <div className="text-xs text-gray-400 mt-2">
-                          Selected image: {currentImage.name}
-                        </div>
-                      )}
                     </div>
                     <div className="flex flex-col gap-3 max-w-[370px] m-auto w-full">
                       <Label htmlFor="name" className="text-sm">
@@ -359,7 +459,10 @@ useEffect(() => {
                     </div>
                   </AlertDialogHeader>
                   <AlertDialogFooter className="!justify-center items-center mt-5">
-                    <AlertDialogCancel className="py-3 px-7 h-auto cursor-pointer !bg-transparent rounded-lg !text-[#e4bc84] !border-[#E4BC84] border-1 text-sm min-w-[104px]">
+                    <AlertDialogCancel
+                      className="py-3 px-7 h-auto cursor-pointer !bg-transparent rounded-lg !text-[#e4bc84] !border-[#E4BC84] border-1 text-sm min-w-[104px]"
+                      onClick={handleCancelEdit}
+                    >
                       Cancel
                     </AlertDialogCancel>
                     <AlertDialogAction
@@ -388,7 +491,6 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Restaurant Offers Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {restaurantOffersData.map((offer) => (
             <div
@@ -396,27 +498,49 @@ useEffect(() => {
               onClick={() => handleCardClick(offer._id)}
               className="overflow-hidden cursor-pointer transition-all duration-300 group"
             >
-              {/* Image Container */}
               <div className="relative overflow-hidden">
-                <Image
-                  src={dummyImg || null}
-                  alt={"alt"}
-                  width={400}
-                  height={200}
-                  className=" aspect-square rounded w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  onError={(e) => {
-                    e.currentTarget.src = "/images/auth-image.jpg";
-                  }}
-                />
+                {isOfferImageLoading ? (
+                  <div className="w-full h-[200px] rounded bg-gray-200 flex items-center justify-center">
+                    <svg
+                      className="animate-spin h-8 w-8 text-gray-500"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z"
+                      />
+                    </svg>
+                  </div>
+                ) : (
+                  <Image
+                    src={offer.image || "/images/rest-image.png"}
+                    alt={offer.offerName}
+                    width={400}
+                    height={200}
+                    className="aspect-square rounded w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                      e.currentTarget.src = "/images/rest-image.png";
+                    }}
+                  />
+                )}
               </div>
-
-              {/* Content */}
               <div className="pt-4">
                 <div className="flex flex-col gap-2">
                   <h3 className="text-white text-lg line-clamp-1 transition-colors">
                     {offer.offerName}
                   </h3>
-                  <p className="text-[#8B8B8B] text-sm ">
+                  <p className="text-[#8B8B8B] text-sm">
                     {offer.visits} stamps required
                   </p>
                 </div>
@@ -425,7 +549,6 @@ useEffect(() => {
           ))}
         </div>
 
-        {/* Empty State */}
         {restaurantOffersData.length === 0 && (
           <div className="text-center py-12">
             <div className="text-white text-lg mb-2">No offers available</div>
@@ -436,9 +559,8 @@ useEffect(() => {
         )}
       </div>
 
-      {/* Restaurant Offer Detail Dialog */}
       <AlertDialog open={isOfferDialogOpen} onOpenChange={setIsOfferDialogOpen}>
-        <AlertDialogContent className="border-0 bg-[#182226] py-8 md:px-8 md:!max-w-[900px] overflow-auto max-h-[90vh] ">
+        <AlertDialogContent className="border-0 bg-[#182226] py-8 md:px-8 md:!max-w-[900px] overflow-auto max-h-[90vh]">
           <AlertDialogHeader className="flex flex-col gap-5 text-left">
             <AlertDialogTitle className="hidden" />
             {selectedOffer && (
@@ -459,30 +581,26 @@ useEffect(() => {
                   <div className="w-full max-w-[250px] md:min-w-[250px]">
                     <div className="flex flex-col gap-3">
                       {isEditMode ? (
-                        <SingleImageUpload
-                          onImageSelect={handleImageSelect}
-                          onImageRemove={handleImageRemove}
+                        <SingleImageUploadOffers
+                          onImageUploaded={handleOfferImageUploaded}
                           placeholder="Upload Offer Image"
                         />
                       ) : (
                         <Image
-                          src={dummyImg}
-                          alt={"alt"}
+                          src={selectedOffer.image || "/images/rest-image.png"}
+                          alt={selectedOffer.offerName}
                           width={250}
                           height={250}
                           className="rounded-lg object-cover w-[250px] h-[250px]"
+                          onError={(e) => {
+                            e.currentTarget.src = "/images/rest-image.png";
+                          }}
                         />
-                      )}
-                      {currentImage && isEditMode && (
-                        <div className="text-xs text-gray-400 mt-2">
-                          Selected image: {currentImage.name}
-                        </div>
                       )}
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-5 w-full">
-                    {/* Offer Name */}
                     <div className="flex flex-col gap-3">
                       <Label htmlFor="offerName" className="text-sm">
                         Offer Name
@@ -505,7 +623,6 @@ useEffect(() => {
                       )}
                     </div>
 
-                    {/* Stamps */}
                     <div className="flex flex-col gap-3">
                       <Label htmlFor="stamps" className="text-sm">
                         Stamps Required
@@ -528,7 +645,6 @@ useEffect(() => {
                       )}
                     </div>
 
-                    {/* Description */}
                     <div className="flex flex-col gap-3">
                       <Label className="text-sm">Description</Label>
                       {isEditMode ? (
@@ -536,7 +652,10 @@ useEffect(() => {
                           className="!bg-[#0A0E11] !text-xs"
                           value={editRestroOfferData.description}
                           onChange={(e) =>
-                            handleOfferInputChange("description", e.target.value)
+                            handleOfferInputChange(
+                              "description",
+                              e.target.value
+                            )
                           }
                           name="description"
                         />
@@ -547,15 +666,17 @@ useEffect(() => {
                       )}
                     </div>
 
-                    {/* Unlock Rewards */}
                     <div className="flex flex-col gap-3">
                       <Label className="text-sm">Unlock Rewards</Label>
                       {isEditMode ? (
                         <Textarea
-                          className="!bg-[#0A0E11]  !text-xs"
+                          className="!bg-[#0A0E11] !text-xs"
                           value={editRestroOfferData.unlockRewards}
                           onChange={(e) =>
-                            handleOfferInputChange("unlockRewards", e.target.value)
+                            handleOfferInputChange(
+                              "unlockRewards",
+                              e.target.value
+                            )
                           }
                           name="unlockRewards"
                         />
@@ -566,15 +687,17 @@ useEffect(() => {
                       )}
                     </div>
 
-                    {/* Redeem In-Store */}
                     <div className="flex flex-col gap-3">
-                      <Label className="text-sm ">Redeem In-Store</Label>
+                      <Label className="text-sm">Redeem In-Store</Label>
                       {isEditMode ? (
                         <Textarea
                           className="!bg-[#0A0E11] !text-xs"
                           value={editRestroOfferData.redeemInStore}
                           onChange={(e) =>
-                            handleOfferInputChange("redeemInStore", e.target.value)
+                            handleOfferInputChange(
+                              "redeemInStore",
+                              e.target.value
+                            )
                           }
                           name="redeemInStore"
                         />
@@ -607,14 +730,12 @@ useEffect(() => {
                 </Button>
               </>
             ) : (
-              <>
-                <AlertDialogCancel
-                  className="py-3 px-8 h-auto cursor-pointer !bg-transparent rounded-lg !text-[#e4bc84] !border-[#E4BC84] border-1 text-sm min-w-[120px]"
-                  onClick={() => setIsOfferDialogOpen(false)}
-                >
-                  Close
-                </AlertDialogCancel>
-              </>
+              <AlertDialogCancel
+                className="py-3 px-8 h-auto cursor-pointer !bg-transparent rounded-lg !text-[#e4bc84] !border-[#E4BC84] border-1 text-sm min-w-[120px]"
+                onClick={() => setIsOfferDialogOpen(false)}
+              >
+                Close
+              </AlertDialogCancel>
             )}
           </AlertDialogFooter>
         </AlertDialogContent>

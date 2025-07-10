@@ -2,7 +2,7 @@ import axios from "axios";
 import { AuthOptions, User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8001";
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL ;
 
 export const authOptions: AuthOptions = {
   session: {

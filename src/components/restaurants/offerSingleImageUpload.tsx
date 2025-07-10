@@ -3,15 +3,15 @@ import { Upload, Edit3, X } from 'lucide-react';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { validateImageFile } from '@/utils/fileValidation';
-import { generateSignedUrlForRestaurants, deleteFileFromS3 } from '@/actions';
+import { deleteFileFromS3, generateSignedUrlForRestaurantOffers } from '@/actions';
 
-type SingleImageUploadProps = {
+type SingleImageUploadOffersProps = {
   onImageUploaded?: (key: string) => void;
   className?: string;
   placeholder?: string;
 };
 
-const SingleImageUpload: React.FC<SingleImageUploadProps> = ({
+const SingleImageUploadOffers: React.FC<SingleImageUploadOffersProps> = ({
   onImageUploaded,
   className = '',
   placeholder = "Click to upload image"
@@ -27,7 +27,7 @@ const SingleImageUpload: React.FC<SingleImageUploadProps> = ({
       const timestamp = Date.now();
       const fileName = `${timestamp}-${file.name}`;
 
-      const { signedUrl, key } = await generateSignedUrlForRestaurants(
+      const { signedUrl, key } = await generateSignedUrlForRestaurantOffers(
         fileName,
         file.type
       );
@@ -115,16 +115,16 @@ const SingleImageUpload: React.FC<SingleImageUploadProps> = ({
     fileInputRef.current?.click();
   };
 
-  return (
-    <div className={`w-full max-w-md mx-auto ${className}`}>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileSelect}
-        className="hidden"
-        disabled={isUploading}
-      />
+return (
+  <div className={`w-full max-w-md mx-auto ${className}`}>
+    <input
+      ref={fileInputRef}
+      type="file"
+      accept="image/*"
+      onChange={handleFileSelect}
+      className="hidden"
+      disabled={isUploading}
+    />
 
       <div className="relative">
         {!preview ? (
@@ -177,4 +177,5 @@ const SingleImageUpload: React.FC<SingleImageUploadProps> = ({
   );
 };
 
-export default SingleImageUpload;
+
+export default SingleImageUploadOffers;

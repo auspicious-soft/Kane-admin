@@ -58,9 +58,9 @@ const Page = () => {
           ...prev,
           [stateKey]: true,
         }));
-        toast.success(
-          response.data.message || `Fetched ${type} policy successfully`
-        );
+        // toast.success(
+        //   response.data.message || `Fetched ${type} policy successfully`
+        // );
       } else if (response.status === 404) {
         setEditorContents((prev) => ({
           ...prev,
