@@ -11,6 +11,7 @@ import TopLeaders from "@/components/dashboard/top-leaders";
 import toast from "react-hot-toast";
 import { getDashboardData } from "@/services/admin-services";
 import { DASHBOARD_URL } from "@/constants/apiUrls";
+import { useLoading } from "@/context/loading-context";
 
 const USERS_PER_PAGE = 10;
 
@@ -18,9 +19,11 @@ const Page = () => {
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
+    const { startLoading, stopLoading } = useLoading();
 
   const fetchDashboard = async (page: number) => {
-    setLoading(true);
+  setLoading(true);
+    startLoading();
     try {
       const response = await getDashboardData(
         DASHBOARD_URL.GET_DASHBOARD_DATA(page, USERS_PER_PAGE)
@@ -35,7 +38,8 @@ const Page = () => {
       console.error("Dashboard error:", err);
       toast.error("Something went wrong.");
     } finally {
-      setLoading(false);
+     setLoading(false);
+        stopLoading();
     }
   };
 
