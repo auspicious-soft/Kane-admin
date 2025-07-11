@@ -11,7 +11,7 @@ const AuthImage = () => {
         className="object-cover"
       />
     </div>
-  );
+  ); 
 };
 
 export default AuthImage;
