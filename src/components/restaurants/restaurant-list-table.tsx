@@ -182,7 +182,7 @@ export default function RestaurantlistTable() {
               <TableHead>Restaurant Name</TableHead>
               <TableHead>Offers</TableHead>
               <TableHead className="w-36">Action</TableHead>
-            </TableRow> 
+            </TableRow>
           </TableHeader>
           {loading ? (
             <tbody>
@@ -211,19 +211,20 @@ export default function RestaurantlistTable() {
               {restaurants.map((restaurant, i) => (
                 <TableRow
                   key={i}
-                  className={`${i % 2 === 0 ? "bg-[#0A0E11]" : "bg-[#182226]"} min-h-8 max-w-1`}
+                  className={`${
+                    i % 2 === 0 ? "bg-[#0A0E11]" : "bg-[#182226]"
+                  } min-h-8 max-w-1`}
                 >
                   <TableCell>#{restaurant.id}</TableCell>
-                  <TableCell
-                  className="min-h-1 min-w-1" >
-                    {" "}
-                    <Image
-                      src={restaurant.image}
-                      alt={restaurant.name}
-                      width={100}
-                      height={65}
-                      className="rounded"
-                    />
+                  <TableCell className="min-h-1 min-w-1">
+                    <div className="w-[100px] h-[65px] relative">
+                      <Image
+                        src={restaurant.image}
+                        alt={restaurant.name}
+                        fill
+                        className="rounded object-fill"
+                      />
+                    </div>
                   </TableCell>
                   <TableCell>{restaurant.name}</TableCell>
                   <TableCell>{restaurant.stamps}</TableCell>

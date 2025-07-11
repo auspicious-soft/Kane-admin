@@ -60,9 +60,7 @@ const Page = () => {
             assignRestaurant: achievementD.assignRestaurant,
             rewardValue: achievementD.rewardValue,
           });
-          toast.success(
-            response.data.message || "Achivement details fetched successfully"
-          );
+         
         } else {
           toast.error(response.data.message || "Failed to fetch details.");
         }

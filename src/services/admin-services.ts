@@ -7,13 +7,13 @@ export const verifyOtpService = async (payload: any) => await axiosInstance.post
 export const resetUserPassword = async (payload: any) => await axiosInstance.patch(`${AUTH_URLS.NEW_PASSWORD}`, payload)
 export const logOutService = async (route: string) => {
     const axiosInstance = await getAxiosInstance()
-    return axiosInstance.post(route)
+    return axiosInstance.post(route)  
 }
 
-//----------Profile Page--------------------------
+//----------Profile Page-------------------------- 
 export const getAdminDetails = async (route: string) => {
     const axiosInstance = await getAxiosInstance()
-    return axiosInstance.get(route)
+    return axiosInstance.get(route) 
 }
 export const updateAdminDetails = async (route: string, payload: any) => {
     const axiosInstance= await getAxiosInstance()

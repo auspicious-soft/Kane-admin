@@ -16,7 +16,7 @@ export const loginAction = async (payload: any) => {
   } catch (error: any) {
     return error?.response?.data;
   }
-};
+}; 
 
 export const logoutAction = async () => {
   try {
@@ -35,7 +35,7 @@ export const getTokenCustom = async () => {
 export const generateSignedUrlToUploadOn = async (fileName: string, fileType: string) => {
   const uploadParams = {
     Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `products/${fileName}`,
+    Key: `products/${fileName}`, 
     ContentType: fileType,
     acl: "public-read",
   };
