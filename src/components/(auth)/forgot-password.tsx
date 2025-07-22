@@ -73,6 +73,8 @@ const forgotPassword = async (e: React.FormEvent) => {
         />
       </div>
       
+     
+
       <Button
         type="submit"
         className="w-full text-sm !bg-[#E4BC84] rounded min-h-12.5 mt-2"
@@ -87,6 +89,15 @@ const forgotPassword = async (e: React.FormEvent) => {
           "Continue"
         )}
       </Button>
+
+        <div className="flex items-center justify-start mt-[-4px]">
+    <a
+      href="/"
+      className="text-sm text-primary underline-offset-2 hover:underline"
+    >
+      Back To Login
+    </a>
+  </div>
     </form>
   );
 }

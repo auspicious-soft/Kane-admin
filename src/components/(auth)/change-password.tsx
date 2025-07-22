@@ -9,11 +9,14 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { Eye, EyeOff } from "lucide-react";
 
 export function ChangePassword() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { startLoading, stopLoading } = useLoading();
   const router = useRouter();
 
@@ -37,9 +40,9 @@ export function ChangePassword() {
     setLoading(true);
     startLoading();
     try {
-      const response = await resetUserPassword( {
-        password : newPassword,
-        otp
+      const response = await resetUserPassword({
+        password: newPassword,
+        otp,
       });
       if (response.status === 200) {
         toast.success(
@@ -82,28 +85,58 @@ export function ChangePassword() {
           <Label htmlFor="password" className="text-sm">
             Enter New Password
           </Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="New Password"
-            required
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="New Password"
+              required
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+            <div
+              className="absolute right-4 top-4  inset-y translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+              onClick={() => setShowPassword((prev) => !prev)}
+            >
+              {showPassword ? (
+                <EyeOff
+                  className="text-zinc-500 hover:text-zinc-300"
+                  size={18}
+                />
+              ) : (
+                <Eye className="text-zinc-500 hover:text-zinc-300" size={18} />
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-3">
           <Label htmlFor="password" className="text-sm">
             Confirm New Password
           </Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="Confirm New Password"
-            required
-            value={confirmNewPassword}
-            onChange={(e) => setConfirmNewPassword(e.target.value)}
-          />
+          <div className="relative">
+            <Input
+              id="password"
+             type={showConfirmPassword ? "text" : "password"}
+              placeholder="Confirm New Password"
+              required
+              value={confirmNewPassword}
+              onChange={(e) => setConfirmNewPassword(e.target.value)}
+            />
+            <div
+              className="absolute right-4 top-4  inset-y translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+              onClick={() => setShowConfirmPassword((prev) => !prev)}
+            >
+              {showConfirmPassword ? (
+                <EyeOff
+                  className="text-zinc-500 hover:text-zinc-300"
+                  size={18}
+                />
+              ) : (
+                <Eye className="text-zinc-500 hover:text-zinc-300" size={18} />
+              )}
+            </div>
+          </div>
         </div>
         <Button
           type="submit"
@@ -111,6 +144,16 @@ export function ChangePassword() {
         >
           Update Password
         </Button>
+
+          <div className="flex items-center justify-start mt-[-4px]">
+          <a
+            href="/otp"
+            className="text-sm text-primary underline-offset-2 hover:underline"
+          >
+           Get Back
+          </a>
+        </div>
+
       </form>
     </>
   );

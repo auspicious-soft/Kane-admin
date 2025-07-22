@@ -16,10 +16,10 @@ import {
   updateAchievementById,
   updateCouponById,
 } from "@/services/admin-services";
-import { ChevronDown } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { ArrowLeft } from "lucide-react";
 
 const Page = () => {
   const params = useParams();
@@ -153,106 +153,122 @@ const Page = () => {
     }));
   };
 
+  const handleBack = () => {
+    router.push("/all-coupons");
+  };
+
   return (
-    <form className="flex flex-col gap-6 md:gap-10">
-      <div>
-        <h2 className="text-xl leading-loose">Update Coupon Details</h2>
-        <div className="bg-[#0a0e11] rounded border border-[#2e2e2e] flex flex-col gap-5 md:gap-9 p-4 md:p-7">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-9">
-            <div className="flex flex-col gap-2.5">
-              <Label>Coupon Type</Label>
-              <select
-                disabled
-                value={editCouponData.type}
-                onChange={(e) => handleInputChange("type", e.target.value)}
-                className="bg-[#0a0e11] border border-[#2e2e2e] rounded px-4 py-2 text-white opacity-60 cursor-not-allowed"
-              >
-                <option value="offer">Offer</option>
-                <option value="points">Points</option>
-                <option value="percentage">Percentage</option>
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-2.5">
-              <Label>Coupon Name</Label>
-              <Input
-                value={editCouponData.couponName ?? ""}
-                onChange={(e) =>
-                  handleInputChange("couponName", e.target.value)
-                }
-                placeholder="Enter Name of Coupon"
-              />
-            </div>
-          </div>
-
-          {editCouponData.type === "offer" && (
-            <div className="grid grid-cols-1 gap-5 md:gap-9">
+    <div className="flex flex-col gap-1">
+      <Button
+        variant="ghost"
+        className="w-fit top-4 flex items-center gap-2 text-[#e4bc84] hover:text-[#e4bc84]/80"
+        onClick={handleBack}
+      >
+        <ArrowLeft className="h-5 w-5" />
+        Back
+      </Button>
+      <form className="flex flex-col gap-6 md:gap-10">
+        <div>
+          <h2 className="text-xl leading-loose">Update Coupon Details</h2>
+          <div className="bg-[#0a0e11] rounded border border-[#2e2e2e] flex flex-col gap-5 md:gap-9 p-4 md:p-7">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-9">
               <div className="flex flex-col gap-2.5">
-                <Label>Offer Name</Label>
+                <Label>Coupon Type</Label>
+                <select
+                  disabled
+                  value={editCouponData.type}
+                  onChange={(e) => handleInputChange("type", e.target.value)}
+                  className="bg-[#0a0e11] border border-[#2e2e2e] rounded px-4 py-2 text-white opacity-60 cursor-not-allowed"
+                >
+                  <option value="offer">Offer</option>
+                  <option value="points">Points</option>
+                  <option value="percentage">Percentage</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2.5">
+                <Label>Coupon Name</Label>
                 <Input
-                  type="text"
-                  value={editCouponData.offerName ?? ""}
+                  value={editCouponData.couponName ?? ""}
                   onChange={(e) =>
-                    handleInputChange("offerName", e.target.value)
+                    handleInputChange("couponName", e.target.value)
                   }
-                  placeholder="Enter offer name"
-                  className="h-[100px] !bg-[#0a0e11] rounded border border-[#2e2e2e]"
+                  placeholder="Enter Name of Coupon"
                 />
               </div>
             </div>
-          )}
 
-          {editCouponData.type === "points" && (
-            <div className="grid grid-cols-1 gap-5 md:gap-9">
+            {editCouponData.type === "offer" && (
+              <div className="grid grid-cols-1 gap-5 md:gap-9">
+                <div className="flex flex-col gap-2.5">
+                  <Label>Offer Name</Label>
+                  <Input
+                    type="text"
+                    value={editCouponData.offerName ?? ""}
+                    onChange={(e) =>
+                      handleInputChange("offerName", e.target.value)
+                    }
+                    placeholder="Enter offer name"
+                    className="h-[100px] !bg-[#0a0e11] rounded border border-[#2e2e2e]"
+                  />
+                </div>
+              </div>
+            )}
+
+            {editCouponData.type === "points" && (
+              <div className="grid grid-cols-1 gap-5 md:gap-9">
+                <div className="flex flex-col gap-2.5">
+                  <Label>Points</Label>
+                  <Input
+                    type="number"
+                    value={editCouponData.points ?? ""}
+                    onChange={(e) =>
+                      handleInputChange("points", e.target.value)
+                    }
+                    placeholder="Enter points"
+                  />
+                </div>
+              </div>
+            )}
+
+            {editCouponData.type === "percentage" && (
+              <div className="grid grid-cols-1 gap-5 md:gap-9">
+                <div className="flex flex-col gap-2.5">
+                  <Label>Percentage</Label>
+                  <Input
+                    type="number"
+                    value={editCouponData.percentage ?? ""}
+                    onChange={(e) =>
+                      handleInputChange("percentage", e.target.value)
+                    }
+                    placeholder="Enter Percentage"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-9">
               <div className="flex flex-col gap-2.5">
-                <Label>Points</Label>
+                <Label>Expiry Date</Label>
                 <Input
-                  type="number"
-                  value={editCouponData.points ?? ""}
-                  onChange={(e) => handleInputChange("points", e.target.value)}
-                  placeholder="Enter points"
+                  type="date"
+                  value={editCouponData.expiry?.slice(0, 10) ?? ""}
+                  onChange={(e) => handleInputChange("expiry", e.target.value)}
                 />
               </div>
-            </div>
-          )}
-
-          {editCouponData.type === "percentage" && (
-            <div className="grid grid-cols-1 gap-5 md:gap-9">
-              <div className="flex flex-col gap-2.5">
-                <Label>Percentage</Label>
-                <Input
-                  type="number"
-                  value={editCouponData.percentage ?? ""}
-                  onChange={(e) =>
-                    handleInputChange("percentage", e.target.value)
-                  }
-                  placeholder="Enter Percentage"
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-9">
-            <div className="flex flex-col gap-2.5">
-              <Label>Expiry Date</Label>
-              <Input
-                type="date"
-                value={editCouponData.expiry?.slice(0, 10) ?? ""}
-                onChange={(e) => handleInputChange("expiry", e.target.value)}
-              />
             </div>
           </div>
         </div>
-      </div>
 
-      <Button
-        onClick={handleSaveEditCoupon}
-        type="button"
-        className="w-full text-sm !bg-[#E4BC84] rounded min-h-12.5 max-w-max px-7.5"
-      >
-        Update Coupon
-      </Button>
-    </form>
+        <Button
+          onClick={handleSaveEditCoupon}
+          type="button"
+          className="w-full text-sm !bg-[#E4BC84] rounded min-h-12.5 max-w-max px-7.5"
+        >
+          Update Coupon
+        </Button>
+      </form>
+    </div>
   );
 };
 

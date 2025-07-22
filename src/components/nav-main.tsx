@@ -27,6 +27,7 @@ export function NavMain({
     url: string
     icon?: string | (() => ReactNode);
     isActive?: boolean
+     matchUrls?: string[];
     items?: {
       title: string
       url: string
@@ -39,7 +40,13 @@ export function NavMain({
     <SidebarGroup>
       <SidebarMenu>
         {items.map((item) => {
-          const isActive = pathname === item.url || (item.items && item.items.some(sub => pathname === sub.url))
+const matchUrls = item.matchUrls || [];
+const isActive =
+  (item.url && pathname.startsWith(item.url)) ||
+  matchUrls.some((url) => pathname.startsWith(url)) ||
+  (item.items &&
+    item.items.some((sub) => pathname.startsWith(sub.url)));
+
 
           return item.items ? (
             <Collapsible
@@ -59,7 +66,8 @@ export function NavMain({
                 <CollapsibleContent> 
                   <SidebarMenuSub>
                     {item.items.map((subItem) => {
-                      const isSubActive = pathname === subItem.url
+                      const isSubActive = pathname.startsWith(subItem.url);
+
                       return (
                         <SidebarMenuSubItem key={subItem.title} className={isSubActive ? "" : ""}>
                           <SidebarMenuSubButton asChild>

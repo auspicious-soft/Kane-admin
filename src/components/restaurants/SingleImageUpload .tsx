@@ -1,27 +1,40 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Edit3, X } from 'lucide-react';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { validateImageFile } from '@/utils/fileValidation';
 import { generateSignedUrlForRestaurants, deleteFileFromS3 } from '@/actions';
+import { useLoading } from '@/context/loading-context';
+import { start } from 'repl';
 
 type SingleImageUploadProps = {
   onImageUploaded?: (key: string) => void;
   className?: string;
   placeholder?: string;
+  initialImage?: string;
 };
 
 const SingleImageUpload: React.FC<SingleImageUploadProps> = ({
   onImageUploaded,
   className = '',
-  placeholder = "Click to upload image"
+  placeholder = "Click to upload image",
+  initialImage,
 }) => {
-  const [preview, setPreview] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(initialImage || null);
   const [isUploading, setIsUploading] = useState(false);
-  const [imageKey, setImageKey] = useState<string | null>(null);
+  const [imageKey, setImageKey] = useState<string | null>(initialImage ? initialImage : null);
+  const [isInitialImage, setIsInitialImage] = useState<boolean>(!!initialImage);
+  const {startLoading, stopLoading} = useLoading();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  useEffect(() => {
+    setPreview(initialImage || null);
+    setImageKey(initialImage ? initialImage : null);
+    setIsInitialImage(!!initialImage);
+  }, [initialImage]);
+
   const uploadImageToS3 = async (file: File): Promise<string> => {
+    startLoading()
     try {
       setIsUploading(true);
       const timestamp = Date.now();
@@ -43,16 +56,18 @@ const SingleImageUpload: React.FC<SingleImageUploadProps> = ({
       }
 
       return key;
+
     } catch (error) {
       console.error("Error uploading image:", error);
       toast.error("Failed to upload image");
       throw error;
     } finally {
       setIsUploading(false);
+      stopLoading()
     }
   };
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+ const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
 
@@ -65,9 +80,11 @@ const SingleImageUpload: React.FC<SingleImageUploadProps> = ({
       return;
     }
 
+    startLoading();
     const reader = new FileReader();
     reader.onload = (ev) => {
       setPreview(ev.target?.result as string);
+      setIsInitialImage(false);
     };
     reader.readAsDataURL(file);
 
@@ -86,10 +103,14 @@ const SingleImageUpload: React.FC<SingleImageUploadProps> = ({
         onImageUploaded(newImageKey);
       }
     } catch (error) {
-      setPreview(null);
+      setPreview(initialImage || null);
+      setImageKey(initialImage ? initialImage : null);
+      setIsInitialImage(!!initialImage);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+    } finally {
+      stopLoading();
     }
   };
 
@@ -101,8 +122,9 @@ const SingleImageUpload: React.FC<SingleImageUploadProps> = ({
         console.error("Failed to delete image:", deleteError);
       }
     }
-    setPreview(null);
-    setImageKey(null);
+    setPreview(initialImage || null);
+    setImageKey(initialImage ? initialImage : null);
+    setIsInitialImage(!!initialImage);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -159,14 +181,16 @@ const SingleImageUpload: React.FC<SingleImageUploadProps> = ({
                   >
                     <Edit3 className="w-5 h-5" />
                   </button>
-                  <button
-                    onClick={handleRemoveImage}
-                    className="cursor-pointer bg-[#B40000] hover:bg-[#B40000] text-white p-2 rounded-full transition-colors"
-                    title="Remove image"
-                    disabled={isUploading}
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                  {!isInitialImage && (
+                    <button
+                      onClick={handleRemoveImage}
+                      className="cursor-pointer bg-[#B40000] hover:bg-[#B40000] text-white p-2 rounded-full transition-colors"
+                      title="Remove image"
+                      disabled={isUploading}
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

@@ -33,7 +33,8 @@ import { useLoading } from "@/context/loading-context";
 import { RESTAURANT_URLS } from "@/constants/apiUrls";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { getFileWithMetadata } from "@/actions";
+import { getFilesWithMetadata, getFileWithMetadata } from "@/actions";
+import CustomSelect from "../ui/Selec";
 
 const RESTAURANTS_PER_PAGE = 12;
 
@@ -45,75 +46,105 @@ type Restaurant = {
   stamps: string;
 };
 
+
+type SortConfig = {
+  key: keyof Restaurant;
+  direction: "asc" | "desc" | "none";
+};
+
 export default function RestaurantlistTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+   const [sortConfig, setSortConfig] = useState<SortConfig>({
+      key: "id",
+      direction: "none",
+    });
+  const [restaurantsPerPage, setRestaurantsPerPage] = useState<string | number>(10);
   const [totalRestaurants, setTotalRestaurants] = useState(0);
   const { startLoading, stopLoading } = useLoading();
   const router = useRouter();
 
-  useEffect(() => {
-    setLoading(true);
-    startLoading();
-    const fetchRestaurants = async () => {
-      try {
-        setError(null);
-        const response = await getAllRestaurants(
-          `${RESTAURANT_URLS.GET_ALL_RESTAURANTS}`
-        );
-        const restaurants = response.data.data;
-        const mappedRestaurants: Restaurant[] = await Promise.all(
-          restaurants.map(async (restaurant: any, i: number) => {
-            let imageUrl = "/images/rest-image.png"; // Default static image
+useEffect(() => {
+  setLoading(true);
+  startLoading();
 
-            // Check if restaurant has an image key
-            if (restaurant.image) {
-              try {
-                const { fileUrl } = await getFileWithMetadata(restaurant.image);
-                imageUrl = fileUrl; // Use the fetched S3 URL
-              } catch (error) {
-                console.error(
-                  `Error fetching image for restaurant ${restaurant._id}:`,
-                  error
-                );
-                // Fallback to static image if fetching fails
-                imageUrl = "/images/rest-image.png";
-              }
-            }
+  const limit =
+    restaurantsPerPage === "all" ? totalRestaurants : Number(restaurantsPerPage);
 
-            return {
-              _id: restaurant._id,
-              id: i + 1,
-              name: restaurant.restaurantName,
-              image: imageUrl,
-              stamps: restaurant.offerCount.toString(),
-            };
-          })
-        );
+  const fetchRestaurants = async () => {
+    try {
+      setError(null);
+      const response = await getAllRestaurants(
+        `${RESTAURANT_URLS.GET_ALL_RESTAURANTS(currentPage, limit)}`
+      );
+      const restaurants = response.data.data.restaurants;
 
-        const start = (currentPage - 1) * RESTAURANTS_PER_PAGE;
-        const paginated = mappedRestaurants.slice(
-          start,
-          start + RESTAURANTS_PER_PAGE
-        );
+      const imageKeys = restaurants
+        .filter((restaurant: any) => restaurant.image)
+        .map((restaurant: any) => restaurant.image);
 
-        setRestaurants(paginated);
-        setTotalRestaurants(mappedRestaurants.length);
-        setLoading(false);
-        stopLoading();
-      } catch (err) {
-        console.error("Error fetching restaurants:", err);
-        setError("Failed to load restaurants. Please try again later.");
-        setLoading(false);
-        stopLoading();
-      }
-    };
-    fetchRestaurants();
-  }, [currentPage]);
+      const imageUrlMap = await getFilesWithMetadata(imageKeys);
 
-  const totalPages = Math.ceil(totalRestaurants / RESTAURANTS_PER_PAGE);
+      const mappedRestaurants: Restaurant[] = restaurants.map(
+        (restaurant: any, i: number) => {
+          const imageUrl =
+            restaurant.image && imageUrlMap[restaurant.image]?.fileUrl
+              ? imageUrlMap[restaurant.image].fileUrl
+              : "/images/rest-image.png";
+
+          return {
+            _id: restaurant._id,
+            id:
+              i +
+              1 +
+              (currentPage - 1) *
+                (restaurantsPerPage === "all" ? 1 : Number(restaurantsPerPage)),
+            name: restaurant.restaurantName,
+            image: imageUrl,
+            stamps: restaurant.offerCount.toString(),
+          };
+        }
+      );
+
+      // Sort restaurants
+      const sortedRestaurants = [...mappedRestaurants].sort((a, b) => {
+        if (sortConfig.direction === "none") return 0;
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          return sortConfig.direction === "asc"
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        }
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          return sortConfig.direction === "asc"
+            ? aValue - bValue
+            : bValue - aValue;
+        }
+        return 0;
+      });
+
+      setRestaurants(sortedRestaurants);
+      setTotalRestaurants(response.data.data.total);
+      setLoading(false);
+      stopLoading();
+    } catch (err) {
+      console.error("Error fetching restaurants:", err);
+      setError("Failed to load restaurants. Please try again later.");
+      setLoading(false);
+      stopLoading();
+    }
+  };
+
+  fetchRestaurants();
+}, [currentPage, restaurantsPerPage, sortConfig]);
+  const totalPages = Math.ceil(
+    totalRestaurants /
+      (restaurantsPerPage === "all" ? totalRestaurants : Number(restaurantsPerPage))
+  );
 
   function getPagination(current: number, total: number) {
     const delta = 1;
@@ -171,8 +202,34 @@ export default function RestaurantlistTable() {
     }
   };
 
+  const selectOptions = [
+    { value: "10", label: "10" },
+    { value: "25", label: "25" },
+    { value: "50", label: "50" },
+    { value: "all", label: "All" },
+  ];
+
+  const handlerestaurantsPerPageChange = (value: string) => {
+    setRestaurantsPerPage(value === "all" ? "all" : parseInt(value));
+    setCurrentPage(1); // Reset to first page when changing limit
+  };
+
   return (
     <>
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl leading-loose">Users List</h2>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-400">Show</span>
+          <CustomSelect
+            value={restaurantsPerPage.toString()}
+            onValueChange={handlerestaurantsPerPageChange}
+            options={selectOptions}
+            placeholder="Select"
+            className="w-[100px]"
+          />
+        </div>
+      </div>
+
       <div className="rounded bg-[#182226] border border-[#2e2e2e] text-[#c5c5c5] overflow-x-auto">
         <Table>
           <TableHeader>
@@ -217,7 +274,7 @@ export default function RestaurantlistTable() {
                 >
                   <TableCell>#{restaurant.id}</TableCell>
                   <TableCell className="min-h-1 min-w-1">
-                    <div className="w-[100px] h-[65px] relative">
+                    <div className="w-[100px] h-[65px] relative ">
                       <Image
                         src={restaurant.image}
                         alt={restaurant.name}
@@ -235,13 +292,16 @@ export default function RestaurantlistTable() {
                         router.push(`/restaurants/${restaurant._id}`)
                       }
                       variant="link"
-                      className="text-[#c5c5c5] text-xs p-0 h-auto cursor-pointer"
+                      className="text-[#e4bc84] text-xs p-0 h-auto cursor-pointer"
                     >
                       View
                     </Button>
                     {/* </Link> */}
                     <AlertDialog>
-                      <AlertDialogTrigger className="cursor-pointer rounded inline-flex justify-center items-center font-normal py-2.5 px-7 text-[#c5c5c5] text-xs">
+                      <AlertDialogTrigger
+                        className="cursor-pointer rounded inline-flex justify-center items-center font-normal py-2.5 px-7 text-[#c5c5c5] text-xs"
+                        style={{ color: "#FF0000" }}
+                      >
                         Delete
                       </AlertDialogTrigger>
                       <AlertDialogContent className=" border-0 bg-[#182226] py-10 md:px-14 md:!max-w-[428px]">

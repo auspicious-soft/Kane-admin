@@ -3,7 +3,7 @@ import RedemptionHistory from "@/components/UserProfile/redemption-history";
 import UserProfileCard from "@/components/UserProfile/UserProfileCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OffersDetails from "@/components/UserProfile/offers-details";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useLoading } from "@/context/loading-context";
 import {
@@ -12,6 +12,9 @@ import {
 } from "@/services/admin-services";
 import { USER_URLS } from "@/constants/apiUrls";
 import { getFileWithMetadata } from "@/actions";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 
 const HISTORY_PER_PAGE = 10;
 
@@ -66,7 +69,7 @@ export default function UserProfile() {
   const [type, setType] = useState<"offer" | "points">("points");
   const [redemptionTotalItems, setRedemptionTotalItems] = useState(0);
   const [offerTotalItems, setOfferTotalItems] = useState(0);
-
+  const router = useRouter();
   const params = useParams();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
   useEffect(() => {
@@ -79,20 +82,18 @@ export default function UserProfile() {
           `${USER_URLS.GET_SINGLE_USER(id as string)}`
         );
         const userDetails = response.data.data;
- let imageUrl = "/images/rest-image.png"; // Default static image
+ let imageUrl = "";
 
-            // Check if restaurant has an image key
             if (userDetails.profilePicture) {
               try {
                 const { fileUrl } = await getFileWithMetadata(userDetails.profilePicture);
-                imageUrl = fileUrl; // Use the fetched S3 URL
+                imageUrl = fileUrl; 
               } catch (error) {
                 console.error(
-                  `Error fetching image for restaurant ${userDetails._id}:`,
+                  `Error fetching image for User ${userDetails._id}:`,
                   error
                 );
-                // Fallback to static image if fetching fails
-                imageUrl = "/images/rest-image.png";
+                imageUrl = "";
               }
             }
         const mappedUser: User = {
@@ -157,7 +158,6 @@ export default function UserProfile() {
           )
         );
         const historyData = response.data.data.history;
-
         if (type === "offer") {
           const mappedOfferHistory: OffHistory[] = historyData.map(
             (item: any) => ({
@@ -175,7 +175,7 @@ export default function UserProfile() {
           const mappedRedemptionHistory: RedemptHistory[] = historyData.map(
             (item: any) => ({
               id: item._id,
-              restaurantName: item.restaurantId.restaurantName,
+              restaurantName: item.restaurantId.restaurantName || "",
               freeItem: item.orderDetails,
               points: item.points,
               type: item.type,
@@ -199,8 +199,23 @@ export default function UserProfile() {
       fetchRedemptionHistory();
     }
   }, [id, redemptionCurrentPage, offerCurrentPage, type]);
+
+    const handleBack = () => {
+    router.push("/all-users");
+  };
+
+  console.log(redemptionHistory,"asd")
   return (
     <>
+      <Button
+        variant="ghost"
+        className="w-fit flex items-center gap-2 text-[#e4bc84] hover:text-[#e4bc84]/80"
+        onClick={handleBack}
+      >
+        <ArrowLeft className="h-5 w-5" />
+        Back
+      </Button>
+
       <UserProfileCard user={user} userId={id} />
 
       <Tabs

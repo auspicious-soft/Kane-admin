@@ -54,10 +54,10 @@ export default function AchievementListTable() {
   const [error, setError] = useState<string | null>(null);
   const { startLoading, stopLoading } = useLoading();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [totalAchivements, setTotalAchievements]= useState(0);
+  const [totalAchivements, setTotalAchievements] = useState(0);
   const router = useRouter();
 
- useEffect(() => {
+  useEffect(() => {
     setLoading(true);
     startLoading();
     const fetchAchievements = async () => {
@@ -67,15 +67,15 @@ export default function AchievementListTable() {
           `${ACHIEVEMENT_URLS.GET_ALL_ACHIEVEMENTS}`
         );
         const achivementsS = response.data.data;
-        console.log(achivementsS,"asdad")
+        console.log(achivementsS, "asdad");
         const mappedAchievements: Achievement[] = achivementsS.map(
           (achievement: any, i) => ({
             _id: achievement._id,
             sNo: i + 1,
             achievementName: achievement.achievementName,
-            rewardValue:achievement.rewardValue,
+            rewardValue: achievement.rewardValue,
             stamps: achievement.stamps.toString(),
-            restaurantName:achievement.assignRestaurant.restaurantName
+            restaurantName: achievement.assignRestaurant.restaurantName,
           })
         );
 
@@ -99,7 +99,6 @@ export default function AchievementListTable() {
     fetchAchievements();
   }, [currentPage]);
   console.log(achievements, "achieveve");
-
 
   const totalPages = Math.ceil(totalAchivements / ACHIEVEMENTS_PER_PAGE);
 
@@ -135,27 +134,29 @@ export default function AchievementListTable() {
   }
 
   const handleDelete = async (achievementId: string) => {
-    try {
+    try { 
       setLoading(true);
       startLoading();
-      await deleteAchivementById(
+      const response = await deleteAchivementById(
         `${ACHIEVEMENT_URLS.DELETE_ACHIEVEMENT(achievementId as string)}`
       );
+      if (response.status === 200) {
         setAchievements((prevAchievement) =>
-        prevAchievement.filter(
-          (achievement) => String(achievement._id) !== achievementId
-        )
-      );
-      setTotalAchievements((prev) => prev - 1);
-      setLoading(false);
-      stopLoading();
+          prevAchievement.filter(
+            (achievement) => String(achievement._id) !== achievementId
+          )
+        );
+        setTotalAchievements((prev) => prev - 1);
+        toast.success(response.data.message || "Achievement deleted Successfully.")
+      }
     } catch (error) {
       console.error("Error deleting restaurant:", error);
       setError("Failed to delete restaurant. Please try again later.");
+    } finally {
       setLoading(false);
       stopLoading();
     }
-  };
+  }; 
   return (
     <>
       <div className="rounded bg-[#182226] border border-[#2e2e2e] text-[#c5c5c5] overflow-x-auto">
@@ -212,13 +213,16 @@ export default function AchievementListTable() {
                         router.push(`/all-achievements/${achievement._id}`)
                       }
                       variant="link"
-                      className="text-[#c5c5c5] text-xs p-0 h-auto cursor-pointer"
+                      className="text-[#e4bc84] text-xs p-0 h-auto cursor-pointer"
                     >
                       View
                     </Button>
                     {/* </Link> */}
                     <AlertDialog>
-                      <AlertDialogTrigger className="cursor-pointer rounded inline-flex justify-center items-center font-normal py-2.5 px-7 text-[#c5c5c5] text-xs">
+                      <AlertDialogTrigger
+                        className="cursor-pointer rounded inline-flex justify-center items-center font-normal py-2.5 px-7 text-[#c5c5c5] text-xs"
+                        style={{ color: "#FF0000" }}
+                      >
                         Delete
                       </AlertDialogTrigger>
                       <AlertDialogContent className=" border-0 bg-[#182226] py-10 md:px-14 md:!max-w-[428px]">
@@ -234,7 +238,9 @@ export default function AchievementListTable() {
                           </AlertDialogCancel>
                           <AlertDialogAction
                             className="w-full shrink-1 py-3 px-7 h-auto border-0 cursor-pointer rounded-lg !text-white text-sm !bg-[#b40000]"
-                             onClick={() => handleDelete(String(achievement._id))}
+                            onClick={() =>
+                              handleDelete(String(achievement._id))
+                            }
                           >
                             Yes, Delete
                           </AlertDialogAction>

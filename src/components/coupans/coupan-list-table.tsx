@@ -138,18 +138,20 @@ export default function CouponlistTable() {
       setLoading(true);
       startLoading();
 
-      await deleteCouponById(
+      const response = await deleteCouponById(
         `${COUPON_URLS.DELETE_COUPON(couponId as string)}`
       );
-      setCoupons((prevCoupons) =>
-        prevCoupons.filter((coupon) => String(coupon._id) !== couponId)
-      );
-      setTotalcoupons((prev) => prev - 1);
-      setLoading(false);
-      stopLoading();
+      if (response.status === 200) {
+        setCoupons((prevCoupons) =>
+          prevCoupons.filter((coupon) => String(coupon._id) !== couponId)
+        );
+        setTotalcoupons((prev) => prev - 1);
+        toast.success(response.data.message);
+      }
     } catch (error) {
       console.error("Error Deleting Coupon:", error);
       setError("Failed to delete Coupon. Please try again later.");
+    } finally {
       setLoading(false);
       stopLoading();
     }
@@ -209,13 +211,16 @@ export default function CouponlistTable() {
                     <Button
                       onClick={() => router.push(`/all-coupons/${coupon._id}`)}
                       variant="link"
-                      className="text-[#c5c5c5] text-xs p-0 h-auto cursor-pointer"
+                      className="text-[#e4bc84] text-xs p-0 h-auto cursor-pointer"
                     >
                       View
                     </Button>
                     {/* </Link> */}
                     <AlertDialog>
-                      <AlertDialogTrigger className="cursor-pointer rounded inline-flex justify-center items-center font-normal py-2.5 px-7 text-[#c5c5c5] text-xs">
+                      <AlertDialogTrigger
+                        className="cursor-pointer rounded inline-flex justify-center items-center font-normal py-2.5 px-7 !text-[#FF0000] text-xs"
+                        style={{ color: "#FF0000" }}
+                      >
                         Delete
                       </AlertDialogTrigger>
                       <AlertDialogContent className=" border-0 bg-[#182226] py-10 md:px-14 md:!max-w-[428px]">

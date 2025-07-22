@@ -6,6 +6,10 @@ interface LoaderProps {
   className?: string;
 }
 
+interface FullPageLoaderProps {
+  className?: string;
+}
+
 export function Loader({ 
   size = "medium", 
   color = "#E4BC84", 
@@ -29,9 +33,9 @@ export function Loader({
   );
 }
 
-export function FullPageLoader() {
+export function FullPageLoader({ className = "" }: FullPageLoaderProps) {
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50">
+    <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-[9999] ${className}`}>
       <div className="bg-[#182226] p-6 rounded-lg shadow-lg flex flex-col items-center">
         <Loader size="large" />
         <p className="mt-4 text-[#E4BC84]">Loading...</p>

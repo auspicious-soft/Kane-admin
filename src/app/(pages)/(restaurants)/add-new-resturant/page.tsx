@@ -12,6 +12,7 @@ import { RESTAURANT_URLS } from "@/constants/apiUrls";
 import { useLoading } from "@/context/loading-context";
 import { validateImageFile } from "@/utils/fileValidation";
 import { deleteFileFromS3, generateSignedUrlForRestaurants } from "@/actions";
+import { ArrowLeft } from "lucide-react";
 
 const Page = () => {
   const [restaurantDetails, setRestaurantDetails] = useState({
@@ -20,7 +21,7 @@ const Page = () => {
   });
 
   const [isUploading, setIsUploading] = useState(false);
-  const[loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { startLoading, stopLoading } = useLoading();
 
@@ -40,15 +41,20 @@ const Page = () => {
   };
 
   const handleRestaurantSave = async () => {
-    if (!restaurantDetails.restaurantName || !restaurantDetails.restaurantLogo) {
-      toast.error("Restaurant name and logo are required.");
-      return;
-    }
-
     setLoading(true);
     startLoading();
-    setIsUploading(true);
 
+    if (
+      !restaurantDetails.restaurantName ||
+      !restaurantDetails.restaurantLogo
+    ) {
+      setTimeout(() => {
+        stopLoading();
+        toast.error("Restaurant name and logo are required.");
+      }, 800);
+      return;
+    }
+    setIsUploading(true);
     try {
       setError(null);
       const response = await CreateRestaurant(
@@ -72,7 +78,8 @@ const Page = () => {
         router.push("/restaurants");
       } else {
         toast.error(
-          response.data.message || "Error occurred while creating the Restaurant"
+          response.data.message ||
+            "Error occurred while creating the Restaurant"
         );
 
         // Cleanup uploaded image on failure
@@ -104,8 +111,21 @@ const Page = () => {
     }
   };
 
+  const handleBack = () => {
+    router.push("/restaurants"); 
+  };
+
   return (
-    <>
+      <div className="flex flex-col gap-1">
+       <Button
+            variant="ghost"
+            className="w-fit flex items-center gap-2 text-[#e4bc84] hover:text-[#e4bc84]/80"
+            onClick={handleBack}
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Back
+          </Button>
+
       <div className="bg-[#0a0e11] rounded border border-[#2e2e2e] p-4 md:py-5 md:px-7 flex flex-col gap-2.5">
         <h2 className="text-xl leading-loose">Restaurant Details</h2>
         <form>
@@ -151,7 +171,7 @@ const Page = () => {
           </div>
         </form>
       </div>
-      <div className="bg-[#0a0e11] rounded border border-[#2e2e2e] p-4 md:py-5 md:px-7 flex flex-col gap-2.5">
+      <div className="bg-[#0a0e11] rounded border border-[#2e2e2e] mt-6 p-4 md:py-5 md:px-7 flex flex-col gap-2.5">
         <div className="flex flex-col md:flex-row items-center justify-between gap-2">
           <h2 className="text-xl leading-loose">Restaurant Offers</h2>
           <div
@@ -162,7 +182,7 @@ const Page = () => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

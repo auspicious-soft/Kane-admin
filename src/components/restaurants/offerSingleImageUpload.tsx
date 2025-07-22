@@ -1,27 +1,41 @@
-import React, { useState, useRef } from 'react';
+"use client";
+
+import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Edit3, X } from 'lucide-react';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { validateImageFile } from '@/utils/fileValidation';
 import { deleteFileFromS3, generateSignedUrlForRestaurantOffers } from '@/actions';
+import { useLoading } from '@/context/loading-context';
 
 type SingleImageUploadOffersProps = {
-  onImageUploaded?: (key: string) => void;
+  onImageUploaded?: (key: string, dataUrl?: string) => void;
   className?: string;
   placeholder?: string;
+  initialImage?: string;
 };
 
 const SingleImageUploadOffers: React.FC<SingleImageUploadOffersProps> = ({
   onImageUploaded,
   className = '',
-  placeholder = "Click to upload image"
+  placeholder = "Click to upload image",
+  initialImage,
 }) => {
-  const [preview, setPreview] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(initialImage || null);
   const [isUploading, setIsUploading] = useState(false);
-  const [imageKey, setImageKey] = useState<string | null>(null);
+  const [imageKey, setImageKey] = useState<string | null>(initialImage ? initialImage : null);
+  const [isInitialImage, setIsInitialImage] = useState<boolean>(!!initialImage);
+  const { startLoading, stopLoading } = useLoading();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  useEffect(() => {
+    setPreview(initialImage || null);
+    setImageKey(initialImage ? initialImage : null);
+    setIsInitialImage(!!initialImage);
+  }, [initialImage]);
+
   const uploadImageToS3 = async (file: File): Promise<string> => {
+    startLoading();
     try {
       setIsUploading(true);
       const timestamp = Date.now();
@@ -49,6 +63,7 @@ const SingleImageUploadOffers: React.FC<SingleImageUploadOffersProps> = ({
       throw error;
     } finally {
       setIsUploading(false);
+      stopLoading();
     }
   };
 
@@ -65,35 +80,43 @@ const SingleImageUploadOffers: React.FC<SingleImageUploadOffersProps> = ({
       return;
     }
 
+    startLoading();
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      setPreview(ev.target?.result as string);
+    reader.onload = async (ev) => {
+      const dataUrl = ev.target?.result as string;
+      setPreview(dataUrl);
+      setIsInitialImage(false);
+
+      try {
+        if (imageKey) {
+          try {
+            await deleteFileFromS3(imageKey);
+          } catch (deleteError) {
+            console.error("Failed to delete previous image:", deleteError);
+          }
+        }
+
+        const newImageKey = await uploadImageToS3(file);
+        setImageKey(newImageKey);
+        if (onImageUploaded) {
+          onImageUploaded(newImageKey, dataUrl);
+        }
+      } catch (error) {
+        setPreview(initialImage || null);
+        setImageKey(initialImage ? initialImage : null);
+        setIsInitialImage(!!initialImage);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      } finally {
+        stopLoading();
+      }
     };
     reader.readAsDataURL(file);
-
-    try {
-      if (imageKey) {
-        try {
-          await deleteFileFromS3(imageKey);
-        } catch (deleteError) {
-          console.error("Failed to delete previous image:", deleteError);
-        }
-      }
-
-      const newImageKey = await uploadImageToS3(file);
-      setImageKey(newImageKey);
-      if (onImageUploaded) {
-        onImageUploaded(newImageKey);
-      }
-    } catch (error) {
-      setPreview(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
   };
 
   const handleRemoveImage = async () => {
+    startLoading();
     if (imageKey) {
       try {
         await deleteFileFromS3(imageKey);
@@ -101,30 +124,32 @@ const SingleImageUploadOffers: React.FC<SingleImageUploadOffersProps> = ({
         console.error("Failed to delete image:", deleteError);
       }
     }
-    setPreview(null);
-    setImageKey(null);
+    setPreview(initialImage || null);
+    setImageKey(initialImage ? initialImage : null);
+    setIsInitialImage(!!initialImage);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
     if (onImageUploaded) {
-      onImageUploaded('');
+      onImageUploaded('', initialImage);
     }
+    stopLoading();
   };
 
   const handleEditClick = () => {
     fileInputRef.current?.click();
   };
 
-return (
-  <div className={`w-full max-w-md mx-auto ${className}`}>
-    <input
-      ref={fileInputRef}
-      type="file"
-      accept="image/*"
-      onChange={handleFileSelect}
-      className="hidden"
-      disabled={isUploading}
-    />
+  return (
+    <div className={`w-full max-w-md mx-auto ${className}`}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+        disabled={isUploading}
+      />
 
       <div className="relative">
         {!preview ? (
@@ -159,14 +184,16 @@ return (
                   >
                     <Edit3 className="w-5 h-5" />
                   </button>
-                  <button
-                    onClick={handleRemoveImage}
-                    className="cursor-pointer bg-[#B40000] hover:bg-[#B40000] text-white p-2 rounded-full transition-colors"
-                    title="Remove image"
-                    disabled={isUploading}
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                  {!isInitialImage && (
+                    <button
+                      onClick={handleRemoveImage}
+                      className="cursor-pointer bg-[#B40000] hover:bg-[#B40000] text-white p-2 rounded-full transition-colors"
+                      title="Remove image"
+                      disabled={isUploading}
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -176,6 +203,5 @@ return (
     </div>
   );
 };
-
 
 export default SingleImageUploadOffers;

@@ -14,6 +14,7 @@ import { ChevronDown } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { ArrowLeft } from "lucide-react";
 
 
 const Page = () => {
@@ -86,7 +87,7 @@ const Page = () => {
       const response = await getAllRestaurants(
         `${RESTAURANT_URLS.GET_ALL_RESTAURANTS}`
       );
-      const fetchedRest = response?.data?.data;
+      const fetchedRest = response?.data?.data.restaurants;
       setRestaurants(fetchedRest);
     } catch (err) {
       console.error("Error fetching achievements:", err);
@@ -155,7 +156,19 @@ const Page = () => {
     }));
   };
 
+    const handleBack = () => {
+    router.push("/all-achievements");
+  };
   return (
+      <div className="flex flex-col gap-1">
+     <Button
+        variant="ghost"
+        className="w-fit top-4 flex items-center gap-2 text-[#e4bc84] hover:text-[#e4bc84]/80"
+        onClick={handleBack}
+      >
+        <ArrowLeft className="h-5 w-5" />
+        Back
+      </Button>
     <form className="flex flex-col gap-6 md:gap-10">
       <div>
         <h2 className="text-xl leading-loose">Update Achievement Details</h2>
@@ -244,6 +257,7 @@ const Page = () => {
         Update Achievement
       </Button>
     </form>
+    </div>
   );
 };
 

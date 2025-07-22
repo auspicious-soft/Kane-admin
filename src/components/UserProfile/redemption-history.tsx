@@ -87,6 +87,8 @@ export default function RedemptionHistory({
     return rangeWithDots;
   }
 
+  console.log(redemptionHistory,"history")
+
   return (
     <div className="flex flex-col gap-2.5">
       <div className="rounded bg-[#182226] border border-[#2e2e2e] text-[#c5c5c5] overflow-x-auto">
@@ -95,9 +97,8 @@ export default function RedemptionHistory({
             <TableRow className="text-xs">
               <TableHead>S.No</TableHead>
               <TableHead>Restaurant Name</TableHead>
-              <TableHead>Item</TableHead>
-              <TableHead>Points</TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead> Reedem Points</TableHead>
+              <TableHead>Register Date</TableHead>
             </TableRow>
           </TableHeader>
           {loading ? (
@@ -135,9 +136,9 @@ export default function RedemptionHistory({
                   <TableCell>
                     <span>{history.restaurantName}</span>
                   </TableCell>
-                  <TableCell>{history.freeItem}</TableCell>
+                  {/* <TableCell>{history.freeItem}</TableCell> */}
                   <TableCell>
-                    {history.type === "earn" ? `+${history.points}` : `-${history.points}`}
+                    {history.points}
                   </TableCell>
                   <TableCell>{history.date}</TableCell>
                 </TableRow>

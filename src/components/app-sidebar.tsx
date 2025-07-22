@@ -17,10 +17,18 @@ import {
   Policies,
   CoupanIcon,
 } from "@/lib/svg";
-import policyIcon from ".././../public/images/mynaui_clipboard-solid.png"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { NavProjects } from "./nav-projects";
-import { redirect } from "next/dist/server/api-utils";
-import {signOut} from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 // This is sample data.
 const data = {
@@ -44,23 +52,25 @@ const data = {
         { title: "All Users", url: "/all-users" },
         { title: "Blocked Users", url: "/blocked-users" },
       ],
+      matchUrls: ["/all-users", "/blocked-users"],
     },
     {
       title: "Restaurants",
       url: "/restaurants",
       icon: RestaurantsIcon,
+      matchUrls: ["/add-new-offers"],
     },
     {
       title: "Achievements",
       url: "/all-achievements",
       icon: AchievementsIcon,
     },
-     {
+    {
       title: "Policies",
       url: "/policies",
       icon: Policies,
     },
-     {
+    {
       title: "Coupans",
       url: "/all-coupons",
       icon: CoupanIcon,
@@ -76,33 +86,35 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-
   const router = useRouter();
-  const handleLogout = async () =>{
-   try {
-     localStorage.removeItem("token")
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = React.useState(false);
+  const handleLogout = async () => {
+    try {
+      localStorage.removeItem("token");
       await signOut({
-        redirect:false
+        redirect: false,
       });
       router.push("/");
-   } catch (error) {
-     localStorage.removeItem("token")
+    } catch (error) {
+      localStorage.removeItem("token");
       await signOut({
-        redirect:false
+        redirect: false,
       });
       router.push("/");
-   }
-  }
-  const projectsWithHandlers = data.projects.map(item => {
+    }
+  };
+
+  const projectsWithHandlers = data.projects.map((item) => {
     if (item.title === "Logout") {
       return {
         ...item,
-        onClick: handleLogout,
+        onClick: () => setIsLogoutDialogOpen(true),
+        className: "cursor-pointer",
       };
     }
     return item;
   });
-  
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -112,7 +124,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-      <NavProjects items={projectsWithHandlers} />
+        <NavProjects items={projectsWithHandlers} />
+        <AlertDialog
+          open={isLogoutDialogOpen}
+          onOpenChange={setIsLogoutDialogOpen}
+        >
+          <AlertDialogContent className="border-0 bg-[#182226] py-10 md:px-14 md:!max-w-[428px]">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="hide" />
+              <AlertDialogDescription className="text-center text-white text-lg font-normal opacity-80 md:!max-w-[220px] m-auto">
+                Are you sure you want to logout?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="!justify-center items-center mt-5">
+              <AlertDialogCancel className="w-full shrink-1 py-3 px-7 h-auto border-0 cursor-pointer !bg-[#e4bc84] rounded-lg !text-[#0a0e11] text-sm">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                className="w-full shrink-1 py-3 px-7 h-auto border-0 cursor-pointer rounded-lg !text-white text-sm !bg-[#298400]"
+                onClick={handleLogout}
+              >
+                Yes, Logout
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SidebarFooter>
     </Sidebar>
   );

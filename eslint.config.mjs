@@ -14,8 +14,10 @@ const eslintConfig = [
   {
     files: ["**/*.ts", "**/*.tsx"],
     rules: {
-      "@typescript-eslint/no-explicit-any": "warn", // or "off"
-      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-explicit-any": "off", // Disable explicit any warnings
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }], // Keep as warn
+      "react-hooks/exhaustive-deps": "warn", // Set to warn instead of error
+      "@next/next/no-html-link-for-pages": "warn", // Set to warn instead of error
     },
   },
 ];

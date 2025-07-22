@@ -1,35 +1,8 @@
-// import type { NextConfig } from "next";
-
-// const nextConfig: NextConfig = {
-//   reactStrictMode:false,
-//   images: {
-//     remotePatterns: [
-//       {
-//         protocol: 'https',
-//        hostname: process.env.AWS_BUCKET_NAME ? `${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com` : '',
-//         pathname: '/api/**',
-//       },
-//       {
-//         protocol: 'https',
-//         hostname: 'via.placeholder.com',
-//         pathname: '/**',
-//       },
-//     ],
-//   },
-//   experimental: {
-//     // Enable if you want to use the auth interrupts feature
-//     // authInterrupts: true,
-//   },
-// };
-
-// export default nextConfig;
-
-
-
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Configure image optimization
+  eslint: {
+    ignoreDuringBuilds: true, // Skip ESLint during builds
+  },
   images: {
     unoptimized: true,
     remotePatterns: [

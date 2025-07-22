@@ -9,9 +9,9 @@ interface NavProjectsProps {
     url: string;
     icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
     onClick?: () => void;
+    className?: string
   }[];
 }
-
 export function NavProjects({ items }: NavProjectsProps) {
   return (
     <SidebarMenu>
@@ -23,7 +23,7 @@ export function NavProjects({ items }: NavProjectsProps) {
             {item.onClick ? (
               <button 
                 onClick={item.onClick}
-                className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground ${item.className || ""}`}
               >
                 {Icon && <Icon className="h-4 w-4" />}
                 <span>{item.title}</span>
@@ -31,7 +31,7 @@ export function NavProjects({ items }: NavProjectsProps) {
             ) : (
               <Link
                 href={item.url}
-                className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground ${item.className || ""}`}
               >
                 {Icon && <Icon className="h-4 w-4" />}
                 <span>{item.title}</span>

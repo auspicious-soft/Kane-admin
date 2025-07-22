@@ -28,6 +28,7 @@ import toast from "react-hot-toast";
 import dummyImg from "../../../../../../public/images/auth-image.jpg";
 import { getFileWithMetadata } from "@/actions";
 import SingleImageUploadOffers from "@/components/restaurants/offerSingleImageUpload";
+import { ArrowLeft } from "lucide-react";
 
 interface Offer {
   _id: string;
@@ -58,6 +59,7 @@ const Page = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { startLoading, stopLoading } = useLoading();
+
   const router = useRouter();
   const [editFormData, setEditFormData] = useState({
     restaurantName: "",
@@ -65,13 +67,16 @@ const Page = () => {
   });
   const [editRestroOfferData, setEditRestroOfferData] = useState({
     offerName: "",
-    image: "offerDummyImage2.png",
+    image: "",
     description: "",
     visits: "",
     redeemInStore: "",
     unlockRewards: "",
   });
-
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [offerImagePreview, setOfferImagePreview] = useState<string | null>(
+    null
+  );
   const [isRestaurantImageLoading, setIsRestaurantImageLoading] =
     useState(true);
   const [isOfferImageLoading, setIsOfferImageLoading] = useState(true);
@@ -93,17 +98,19 @@ const Page = () => {
         if (response.status === 200) {
           const restData = response.data.data.restaurant;
           const restOfferData = response.data.data.offers;
-          let imageUrl = "/images/rest-image.png";
+          let imageUrl = "";
           if (restData.image) {
             try {
               const { fileUrl } = await getFileWithMetadata(restData.image);
               imageUrl = fileUrl;
+              setImagePreview(fileUrl);
             } catch (error) {
               console.error(
                 `Error fetching image for restaurant ${restData._id}:`,
                 error
               );
-              imageUrl = "/images/rest-image.png";
+              imageUrl = "";
+              setImagePreview(null);
             }
           }
           setRestaurantData({
@@ -166,7 +173,6 @@ const Page = () => {
     fetchRestaurantData();
   }, [id]);
 
-
   const handleCardClick = (id: string) => {
     const offer = restaurantOffersData.find((offer) => offer._id === id);
     if (offer) {
@@ -181,17 +187,26 @@ const Page = () => {
         redeemInStore: offer.redeemInStore,
         unlockRewards: offer.unlockRewards,
       });
+      setOfferImagePreview(offer.image || null);
     }
   };
-
   const handleCancelEdit = () => {
     setIsEditMode(false);
     setEditFormData({
       restaurantName: restaurantData.restaurantName,
       image: restaurantData.logo,
     });
+    setImagePreview(restaurantData.logo);
+    setEditRestroOfferData({
+      offerName: selectedOffer?.offerName || "",
+      image: selectedOffer?.image || "",
+      description: selectedOffer?.description || "",
+      visits: selectedOffer?.visits || "",
+      redeemInStore: selectedOffer?.redeemInStore || "",
+      unlockRewards: selectedOffer?.unlockRewards || "",
+    });
+    setOfferImagePreview(selectedOffer?.image || null);
   };
-
   const handleSaveEditOffer = async () => {
     if (!id || !selectedOffer?._id) return;
 
@@ -210,9 +225,11 @@ const Page = () => {
       if (response.status === 200) {
         toast.success(response.data.message || "Offer updated successfully.");
 
-        // Fetch the updated image URL after saving
         let updatedImageUrl = editRestroOfferData.image;
-        if (editRestroOfferData.image) {
+        if (
+          editRestroOfferData.image &&
+          !editRestroOfferData.image.startsWith("http")
+        ) {
           try {
             const { fileUrl } = await getFileWithMetadata(
               editRestroOfferData.image
@@ -251,12 +268,13 @@ const Page = () => {
 
         setEditRestroOfferData({
           offerName: "",
-          image: "offerDummyImage2.png",
+          image: "",
           description: "",
           visits: "",
           redeemInStore: "",
           unlockRewards: "",
         });
+        setOfferImagePreview(null);
         setIsEditMode(false);
         setIsOfferDialogOpen(false);
       } else {
@@ -273,18 +291,57 @@ const Page = () => {
     }
   };
 
-  const handleImageUploaded = (key: string) => {
-    setEditFormData((prev) => ({
-      ...prev,
-      image: key,
-    }));
+  const handleImageUploaded = async (key: string) => {
+    if (!key) {
+      setEditFormData((prev) => ({
+        ...prev,
+        image: "",
+      }));
+      setImagePreview(null);
+      return;
+    }
+    try {
+      const { fileUrl } = await getFileWithMetadata(key);
+      setEditFormData((prev) => ({
+        ...prev,
+        image: key, // Store S3 key
+      }));
+      setImagePreview(fileUrl); // Update preview
+    } catch (error) {
+      console.error("Error fetching uploaded image:", error);
+      setEditFormData((prev) => ({
+        ...prev,
+        image: "",
+      }));
+      setImagePreview(null);
+      toast.error("Failed to load uploaded image.");
+    }
   };
 
-  const handleOfferImageUploaded = (key: string) => {
-    setEditRestroOfferData((prev) => ({
-      ...prev,
-      image: key,
-    }));
+  const handleOfferImageUploaded = async (key: string, dataUrl?: string) => {
+    if (!key) {
+      setEditRestroOfferData((prev) => ({
+        ...prev,
+        image: "",
+      }));
+      setOfferImagePreview(null);
+      return;
+    }
+    try {
+      setEditRestroOfferData((prev) => ({
+        ...prev,
+        image: key,
+      }));
+      setOfferImagePreview(dataUrl || (await getFileWithMetadata(key)).fileUrl);
+    } catch (error) {
+      console.error("Error fetching uploaded offer image:", error);
+      setEditRestroOfferData((prev) => ({
+        ...prev,
+        image: "",
+      }));
+      setOfferImagePreview(null);
+      toast.error("Failed to load uploaded offer image.");
+    }
   };
 
   const handleEditClick = () => {
@@ -308,8 +365,8 @@ const Page = () => {
         toast.success(
           response.data.message || "Restaurant Updated Successfully."
         );
-        let imageUrl = "";
-        if (editFormData.image) {
+        let imageUrl = imagePreview || "/images/rest-image.png";
+        if (editFormData.image && !editFormData.image.startsWith("http")) {
           try {
             const { fileUrl } = await getFileWithMetadata(editFormData.image);
             imageUrl = fileUrl;
@@ -321,14 +378,16 @@ const Page = () => {
             imageUrl = "/images/rest-image.png";
           }
         }
+
         setRestaurantData({
           restaurantName: editFormData.restaurantName,
-          logo: editFormData.image,
+          logo: imageUrl,
         });
         setEditFormData({
           restaurantName: editFormData.restaurantName,
-          image: imageUrl,
+          image: editFormData.image, // Keep S3 key
         });
+        setImagePreview(imageUrl); // Ensure imagePreview is updated
         setIsEditMode(false);
       } else {
         toast.error(
@@ -363,8 +422,20 @@ const Page = () => {
     }));
   };
 
+  const handleBack = () => {
+    router.push("/restaurants");
+  };
+
   return (
-    <>
+    <div className="flex flex-col gap-1">
+      <Button
+        variant="ghost"
+        className="w-fit flex items-center gap-2 text-[#e4bc84] hover:text-[#e4bc84]/80"
+        onClick={handleBack}
+      >
+        <ArrowLeft className="h-5 w-5" />
+        Back
+      </Button>
       <div className="bg-[#0a0e11] rounded border border-[#2e2e2e] p-4 md:py-5 md:px-7 flex flex-col gap-2.5">
         <div>
           <div className="flex flex-col lg:flex-row gap-10">
@@ -398,7 +469,11 @@ const Page = () => {
                   </div>
                 ) : (
                   <Image
-                    src={editFormData.image || "/images/rest-image.png"}
+                    src={
+                      editFormData.image && imagePreview
+                        ? imagePreview
+                        : "/images/rest-image.png"
+                    }
                     alt="Restaurant Logo"
                     width={250}
                     height={250}
@@ -438,9 +513,17 @@ const Page = () => {
                       Edit Restaurant Details
                     </h2>
                     <div className="flex flex-col gap-3 max-w-[250px] w-full m-auto">
+                      <Label htmlFor="image" className="text-sm">
+                        Restaurant Logo
+                      </Label>
                       <SingleImageUpload
                         onImageUploaded={handleImageUploaded}
-                        placeholder="Upload Restaurant Logo"
+                        placeholder={
+                          imagePreview
+                            ? "Change Restaurant Logo"
+                            : "Upload Restaurant Logo"
+                        }
+                        initialImage={imagePreview}
                       />
                     </div>
                     <div className="flex flex-col gap-3 max-w-[370px] m-auto w-full">
@@ -480,11 +563,11 @@ const Page = () => {
         </div>
       </div>
 
-      <div className="bg-[#0a0e11] rounded border border-[#2e2e2e] p-4 md:py-5 md:px-7 flex flex-col gap-2.5">
+      <div className="bg-[#0a0e11] mt-12 rounded border border-[#2e2e2e] p-4 md:py-5 md:px-7 flex flex-col gap-2.5">
         <div className="flex flex-col md:flex-row items-center justify-between gap-2">
           <h2 className="text-xl leading-loose">Restaurant Offers</h2>
           <div
-            className="px-[30px] py-2.5 bg-[#e4bc84] rounded inline-flex justify-center items-center gap-2 text-[#0a0e11] text-sm font-normal"
+            className="px-[30px] cursor-pointer py-2.5 bg-[#e4bc84] rounded inline-flex justify-center items-center gap-2 text-[#0a0e11] text-sm font-normal"
             onClick={() => router.push(`/add-new-offers?source=offer&id=${id}`)}
           >
             Add New Offers
@@ -583,7 +666,12 @@ const Page = () => {
                       {isEditMode ? (
                         <SingleImageUploadOffers
                           onImageUploaded={handleOfferImageUploaded}
-                          placeholder="Upload Offer Image"
+                          placeholder={
+                            offerImagePreview
+                              ? "Change Offer Image"
+                              : "Upload Offer Image"
+                          }
+                          initialImage={offerImagePreview}
                         />
                       ) : (
                         <Image
@@ -740,7 +828,7 @@ const Page = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 };
 

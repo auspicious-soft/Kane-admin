@@ -160,3 +160,81 @@ export const getFileWithMetadata = async (fileKey: string) => {
     throw new Error("❌ Error fetching file and metadata");
   }
 };
+
+export const getFilesWithMetadata = async (fileKeys: string[]) => {
+  if (!fileKeys || fileKeys.length === 0) {
+    return {};
+  }
+
+  try {
+    const s3 = await createS3Client();
+
+    // Create an array of promises for HeadObject commands
+    const headObjectPromises = fileKeys.map(async (fileKey) => {
+      try {
+        const headData = await s3.send(
+          new HeadObjectCommand({
+            Bucket: process.env.AWS_BUCKET_NAME!,
+            Key: fileKey,
+          })
+        );
+        const metadata = headData.Metadata || {};
+        if (metadata.timestamps) {
+          try {
+            const firstDecode = Buffer.from(metadata.timestamps, "base64").toString("utf-8");
+            const secondDecode = Buffer.from(firstDecode, "base64").toString("utf-8");
+            metadata.timestamps = JSON.parse(secondDecode);
+          } catch (error) {
+            console.error(`Error decoding metadata timestamps for ${fileKey}:`, error);
+            metadata.timestamps = null; // Fallback to null if decoding fails
+          }
+        }
+        return { fileKey, metadata, success: true };
+      } catch (error) {
+        console.error(`Error fetching metadata for ${fileKey}:`, error);
+        return { fileKey, metadata: {}, success: false };
+      }
+    });
+
+    // Execute all HeadObject commands in parallel
+    const headResults = await Promise.all(headObjectPromises);
+
+    // Generate signed URLs for all files in parallel
+    const urlPromises = fileKeys.map(async (fileKey) => {
+      try {
+        const fileUrl = await getImageClientS3URL(fileKey);
+        return { fileKey, fileUrl, success: true };
+      } catch (error) {
+        console.error(`Error generating URL for ${fileKey}:`, error);
+        return { fileKey, fileUrl: null, success: false };
+      }
+    });
+
+    const urlResults = await Promise.all(urlPromises);
+
+    // Combine results into a single map
+    const resultMap: {
+      [key: string]: { fileUrl: string | null; metadata: { [key: string]: any } };
+    } = {};
+
+    headResults.forEach(({ fileKey, metadata, success }) => {
+      if (success) {
+        resultMap[fileKey] = { fileUrl: null, metadata }; // Initialize with metadata
+      }
+    });
+
+    urlResults.forEach(({ fileKey, fileUrl, success }) => {
+      if (success && resultMap[fileKey]) {
+        resultMap[fileKey].fileUrl = fileUrl;
+      } else if (success) {
+        // In case metadata fetch failed but URL generation succeeded
+        resultMap[fileKey] = { fileUrl, metadata: {} };
+      }
+    });
+
+    return resultMap;
+  } catch (error) {
+    console.error("❌ Error in batch fetching files metadata:", error);
+    throw new Error("❌ Failed to fetch files and metadata in batch");
+  }
+};

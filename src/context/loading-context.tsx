@@ -19,7 +19,7 @@ export function LoadingProvider({ children }: { children: ReactNode }) {
 
   return (
     <LoadingContext.Provider value={{ isLoading, startLoading, stopLoading }}>
-      {isLoading && <FullPageLoader />}
+      {isLoading && <FullPageLoader className="fixed inset-0 c flex items-center justify-center bg-black bg-opacity-50" />}
       {children}
     </LoadingContext.Provider>
   );

@@ -93,10 +93,11 @@ export default function OffersDetails({
           <TableHeader>
             <TableRow className="text-xs">
               <TableHead>S.No</TableHead>
-              <TableHead>Restaurant Name</TableHead>
+              {/* <TableHead>Restaurant Name</TableHead> */}
               <TableHead>Offer Name</TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead>Date</TableHead>
+               <TableHead>Status</TableHead>
+              {/* <TableHead>Action</TableHead> */}
+              {/* <TableHead>Date</TableHead> */}
             </TableRow>
           </TableHeader>
           {loading ? (
@@ -131,12 +132,13 @@ export default function OffersDetails({
                   <TableCell>
                     <span>{(currentPage - 1) * HISTORY_PER_PAGE + i + 1}</span>
                   </TableCell>
-                  <TableCell>
+                  {/* <TableCell>
                     <span>{history.restaurantName}</span>
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell>{history.offerName}</TableCell>
-                  <TableCell>{history.type.charAt(0).toUpperCase() + history.type.slice(1)}</TableCell>
-                  <TableCell>{history.date}</TableCell>
+                  <TableCell>
+{history.type === 'redeem' ? 'Used' : history.type === 'earn' ? 'Not Used' : ""}                    </TableCell>
+                  {/* <TableCell>{history.date}</TableCell> */}
                 </TableRow>
               ))}
             </TableBody>
