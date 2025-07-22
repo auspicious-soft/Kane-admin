@@ -113,7 +113,7 @@ export function LoginForm() {
         className="pr-10"
       />
       <div
-        className="absolute right-4 top-4  inset-y translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+        className="absolute right-4 top-2  inset-y translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
         onClick={() => setShowPassword((prev) => !prev)}
       >
         {showPassword ? <EyeOff className="text-zinc-500 hover:text-zinc-300" size={18} /> : <Eye className="text-zinc-500 hover:text-zinc-300" size={18} />}
