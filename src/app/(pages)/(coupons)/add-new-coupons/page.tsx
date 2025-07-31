@@ -68,14 +68,15 @@ const Page = () => {
       (!couponData.points.trim() || Number(couponData.points) <= 0)
     )
       newErrors.points = "Points must be a positive number";
-    if (couponData.expiry && new Date(couponData.expiry) < new Date())
-      newErrors.expiry = "Expiry date must be in the future";
+    if (!couponData.expiry )
+      newErrors.expiry = "Expiry date is required and must be in the future ";
     if (couponData.type === "percentage" && !couponData.percentage.trim())
       newErrors.percentage = "Percentage is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  console.log(errors,"error")
   const handleCreateCoupon = async () => {
     setFormSubmitted(true);
     if (!validateForm()) {

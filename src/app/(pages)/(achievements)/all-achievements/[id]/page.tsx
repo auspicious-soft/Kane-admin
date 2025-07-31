@@ -85,9 +85,9 @@ const Page = () => {
       startLoading();
 
       const response = await getAllRestaurants(
-        `${RESTAURANT_URLS.GET_ALL_RESTAURANTS}`
+        `${RESTAURANT_URLS.GET_ALL_RESTAURANTS(1,2000)}`
       );
-      const fetchedRest = response?.data?.data.restaurants;
+      const fetchedRest = response.data.data.restaurants;
       setRestaurants(fetchedRest);
     } catch (err) {
       console.error("Error fetching achievements:", err);
