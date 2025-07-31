@@ -34,12 +34,11 @@ type Leader = {
 };
 
 type TopLeadersProps = {
-   leaders: Leader[];
+  leaders: Leader[];
   total: number;
   currentPage: number;
-   onPageChange: (page: number) => void;
+  onPageChange: (page: number) => void;
 };
-
 
 export default function TopLeaders({
   leaders,
@@ -51,7 +50,7 @@ export default function TopLeaders({
   const USERS_PER_PAGE = 10;
   const router = useRouter();
 
-const paginated = leaders;
+  const paginated = leaders;
 
   const totalPages = Math.ceil(total / USERS_PER_PAGE);
 
@@ -62,7 +61,11 @@ const paginated = leaders;
     let l: number | undefined = undefined;
 
     for (let i = 1; i <= total; i++) {
-      if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
+      if (
+        i === 1 ||
+        i === total ||
+        (i >= current - delta && i <= current + delta)
+      ) {
         range.push(i);
       }
     }
@@ -103,7 +106,10 @@ const paginated = leaders;
           <TableBody>
             {paginated.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="p-5 text-center text-sm text-gray-400">
+                <TableCell
+                  colSpan={8}
+                  className="p-5 text-center text-sm text-gray-400"
+                >
                   No leaders found.
                 </TableCell>
               </TableRow>
@@ -155,40 +161,48 @@ const paginated = leaders;
           <Pagination>
             <PaginationContent>
               <PaginationItem>
-                 <PaginationLink
-        href="#"
-      onClick={() => onPageChange(currentPage - 1)}
-        isActive={false}
-      >
-        Prev
-      </PaginationLink>
+                <PaginationLink
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    currentPage > 1 && onPageChange(currentPage - 1);
+                  }}
+                  isActive={false}
+                  className={currentPage === 1 ? "pointer-events-none " : ""}
+                >
+                  Prev
+                </PaginationLink>
               </PaginationItem>
-
-             {getPagination(currentPage, totalPages).map((page, idx) => (
-  <PaginationItem key={idx}>
-    {page === "..." ? (
-      <span className="bg-white text-[#0a0e11] px-2 py-[7px] min-w-8 rounded-md text-xs font-normal">
-        ...
-      </span>
-    ) : (
-      <PaginationLink
-        href="#"
-        isActive={currentPage === Number(page)} // ✅ Fix here
-        onClick={() => onPageChange(Number(page))}
-      >
-        {page}
-      </PaginationLink>
-    )}
-  </PaginationItem>
-))}
-
+              {getPagination(currentPage, totalPages).map((page, idx) => (
+                <PaginationItem key={idx}>
+                  {page === "..." ? (
+                    <span className="bg-white text-[#0a0e11] px-2 py-[7px] min-w-8 rounded-md text-xs font-normal">
+                      ...
+                    </span>
+                  ) : (
+                    <PaginationLink
+                      href="#"
+                      isActive={currentPage === Number(page)} // ✅ Fix here
+                      onClick={() => onPageChange(Number(page))}
+                    >
+                      {page}
+                    </PaginationLink>
+                  )}
+                </PaginationItem>
+              ))}
               <PaginationItem>
-                 <PaginationLink
-        href="#"
-      onClick={() => onPageChange(currentPage + 1)}
+                <PaginationLink
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
 
-        isActive={false}
-      >
+                    currentPage < totalPages && onPageChange(currentPage + 1);
+                  }}
+                  isActive={false}
+                  className={
+                    currentPage === totalPages ? "pointer-events-none" : ""
+                  }
+                >
                   Next
                 </PaginationLink>
               </PaginationItem>
