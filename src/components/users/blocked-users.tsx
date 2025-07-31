@@ -25,6 +25,7 @@ import toast from "react-hot-toast";
 import dummyImg from "../../../public/images/dummyUserPic.png";
 import CustomSelect from "../ui/Selec";
 import { ChevronsUpDown } from "lucide-react";
+import { getFileWithMetadata } from "@/actions";
 
 type User = {
   _id: string;
@@ -76,25 +77,57 @@ export default function BlockedUsers() {
           `${USER_URLS.GET_ALL_BLOCKED_USERS(currentPage, limit)}`
         );
         const apiUsers = response.data.data.users;
-        const mappedUsers: User[] = apiUsers.map((user: any, i: number) => ({
-          _id: user._id,
-          id:
-            i +
-            1 +
-            (currentPage - 1) *
-              (usersPerPage === "all" ? 1 : Number(usersPerPage)),
-          fullName: user.fullName,
-          email: user.email,
-          countryCode: user.countryCode,
-          phoneNumber: user.phoneNumber,
-          profilePic: user.profilePic,
-          loyaltyid: user.loyaltyid || "N/A",
-          gender: user.gender || "Unknown",
-          points: user.points || 0,
-          status: user.isBlocked ? "Blocked" : "Active",
-          stamps: user.stamps?.toString() || "0",
-          date: user.date || new Date().toLocaleDateString(),
-        }));
+        const mappedUsers: User[] = await Promise.all(
+          apiUsers.map(async (user: any, i: number) => {
+            let imageUrl = "/images/user-placeholder.png";
+            if (user.profilePicture && user.profilePicture !== "") {
+              try {
+                const { fileUrl } = await getFileWithMetadata(
+                  user.profilePicture
+                );
+                imageUrl = fileUrl;
+              } catch (error) {
+                console.error(
+                  `Error fetching image for user ${user._id}:`,
+                  error
+                );
+                imageUrl = "/images/user-placeholder.png";
+              }
+            }
+
+            const formattedDate = user.createdAt
+              ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                  month: "numeric",
+                  day: "numeric",
+                  year: "numeric",
+                })
+              : new Date().toLocaleDateString("en-US", {
+                  month: "numeric",
+                  day: "numeric",
+                  year: "numeric",
+                });
+
+            return {
+              _id: user._id,
+              id:
+                i +
+                1 +
+                (currentPage - 1) *
+                  (usersPerPage === "all" ? 1 : Number(usersPerPage)),
+              fullName: user.fullName,
+              email: user.email,
+              countryCode: user.countryCode,
+              phoneNumber: user.phoneNumber,
+              profilePic: user.profilePic,
+              loyaltyid: user.loyaltyid || "N/A",
+              gender: user.gender || "Unknown",
+              points: user.points || 0,
+              status: user.isBlocked ? "Blocked" : "Active",
+              stamps: user.stamps?.toString() || "0",
+              date: formattedDate,
+            };
+          })
+        );
 
         const sortedUsers = [...mappedUsers].sort((a, b) => {
           if (sortConfig.direction === "none") return 0;
@@ -147,7 +180,6 @@ export default function BlockedUsers() {
     });
   };
 
-  
   function getPagination(current: number, total: number) {
     const delta = 1;
     const range = [];
@@ -201,16 +233,6 @@ export default function BlockedUsers() {
     <div className="flex flex-col gap-2.5">
       <div className="flex justify-between items-center">
         <h2 className="text-xl leading-loose">Users List</h2>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400">Show</span>
-          <CustomSelect
-            value={usersPerPage.toString()}
-            onValueChange={handleUsersPerPageChange}
-            options={selectOptions}
-            placeholder="Select"
-            className="w-[100px]"
-          />
-        </div>
       </div>
       <div className="rounded bg-[#182226] border border-[#2e2e2e] text-[#c5c5c5] overflow-x-auto">
         <Table>
@@ -347,6 +369,18 @@ export default function BlockedUsers() {
           </div>
           <Pagination>
             <PaginationContent>
+              <PaginationItem>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-400">Show</span>
+                  <CustomSelect
+                    value={usersPerPage.toString()}
+                    onValueChange={handleUsersPerPageChange}
+                    options={selectOptions}
+                    placeholder="Select"
+                    className="w-[100px]"
+                  />
+                </div>
+              </PaginationItem>
               <PaginationItem>
                 <PaginationLink
                   href="#"

@@ -218,16 +218,7 @@ useEffect(() => {
     <>
       <div className="flex justify-between items-center">
         <h2 className="text-xl leading-loose">Users List</h2>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400">Show</span>
-          <CustomSelect
-            value={restaurantsPerPage.toString()}
-            onValueChange={handlerestaurantsPerPageChange}
-            options={selectOptions}
-            placeholder="Select"
-            className="w-[100px]"
-          />
-        </div>
+       
       </div>
 
       <div className="rounded bg-[#182226] border border-[#2e2e2e] text-[#c5c5c5] overflow-x-auto">
@@ -340,6 +331,18 @@ useEffect(() => {
           </div>
           <Pagination>
             <PaginationContent>
+              <PaginationItem>
+                 <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-400">Show</span>
+          <CustomSelect
+            value={restaurantsPerPage.toString()}
+            onValueChange={handlerestaurantsPerPageChange}
+            options={selectOptions}
+            placeholder="Select"
+            className="w-[100px]"
+          />
+        </div>
+              </PaginationItem>
               <PaginationItem>
                 <PaginationLink
                   href="#"

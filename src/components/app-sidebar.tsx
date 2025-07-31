@@ -58,12 +58,13 @@ const data = {
       title: "Restaurants",
       url: "/restaurants",
       icon: RestaurantsIcon,
-      matchUrls: ["/add-new-offers"],
+      matchUrls: ["/add-new-offers", "/add-new-restaurant"],
     },
     {
       title: "Achievements",
       url: "/all-achievements",
       icon: AchievementsIcon,
+      matchUrls: ["/add-new-achievements"],
     },
     {
       title: "Policies",
@@ -74,6 +75,7 @@ const data = {
       title: "Coupans",
       url: "/all-coupons",
       icon: CoupanIcon,
+      matchUrls: ["/add-new-coupons"],
     },
   ],
   projects: [

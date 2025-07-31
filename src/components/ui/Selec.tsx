@@ -47,7 +47,7 @@ export default function CustomSelect({
         </svg>
       </button>
       {isOpen && (
-        <div className="absolute z-10 w-[100px] bg-[#182226] border border-[#2e2e2e] text-[#c5c5c5] rounded-md mt-1 max-h-60 overflow-auto">
+        <div className="absolute z-10 w-[100px] bg-[#182226] border border-[#2e2e2e] text-[#c5c5c5] rounded-md bottom-full mb-1 max-h-60 overflow-auto">
           {options.map((option) => (
             <div
               key={option.value}

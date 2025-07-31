@@ -1,4 +1,3 @@
-// pages/add-new-offers/page.tsx
 "use client";
 import { deleteFileFromS3 } from "@/actions";
 import { useData } from "@/components/DataContext";
@@ -15,7 +14,7 @@ import {
   CreateRestaurantOffer,
 } from "@/services/admin-services";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useState, Suspense } from "react"; // Import Suspense
+import React, { useState, Suspense } from "react";
 import toast from "react-hot-toast";
 import { ArrowLeft } from "lucide-react";
 
@@ -28,7 +27,16 @@ interface Offer {
   redeemInStore: string;
 }
 
-// Create a component that uses useSearchParams
+interface Errors {
+  offerName?: string;
+  image?: string;
+  description?: string;
+  visits?: string;
+  unlockRewards?: string;
+  redeemInStore?: string;
+  general?: string;
+}
+
 const AddNewOfferContent = () => {
   const searchParams = useSearchParams();
   const source = searchParams.get("source");
@@ -46,28 +54,49 @@ const AddNewOfferContent = () => {
       redeemInStore: "",
     },
   ]);
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Errors>({});
+  const [formSubmitted, setFormSubmitted] = useState(false);
   const [loading, setLoading] = useState(true);
   const { startLoading, stopLoading } = useLoading();
   const router = useRouter();
   const { sharedData } = useData();
 
- 
   const handleImageUploaded = (key: string) => {
     setCurrentImageKey(key);
     setRestaurantOffers((prev) => [{ ...prev[0], image: key }]);
+    setErrors((prev) => ({ ...prev, image: undefined }));
     console.log("Image uploaded with key:", key);
   };
-
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setRestaurantOffers((prev) => [{ ...prev[0], [name]: value }]);
+    // Clear error for the field in real-time when user types
+    if (value.trim() !== "") {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    } else if (formSubmitted) {
+      // Show error if form was submitted and field is empty
+      setErrors((prev) => ({ ...prev, [name]: "This field is required" }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Errors = {};
+    const offer = restaurantOffers[0];
+    if (!offer.offerName.trim()) newErrors.offerName = "Offer Name is required";
+    if (!offer.image.trim()) newErrors.image = "Image is required";
+    if (!offer.description.trim()) newErrors.description = "Description is required";
+    if (!offer.visits.trim()) newErrors.visits = "No. of Stamps is required";
+    if (!offer.unlockRewards.trim()) newErrors.unlockRewards = "Unlock Rewards value is required";
+    if (!offer.redeemInStore.trim()) newErrors.redeemInStore = "Reedem in store value is required";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleRestaurantSave = async () => {
+    setFormSubmitted(true);
     if (
       !sharedData.restaurantDetails.restaurantName ||
       !sharedData.restaurantDetails.restaurantLogo
@@ -77,12 +106,8 @@ const AddNewOfferContent = () => {
       );
       return;
     }
-    console.log(restaurantOffers[0], "details");
-    const isAnyOfferFieldEmpty = Object.values(restaurantOffers[0]).some(
-      (value) => value.trim() === ""
-    );
 
-    if (isAnyOfferFieldEmpty) {
+    if (!validateForm()) {
       toast.error("All fields in the offer are required.");
       return;
     }
@@ -90,7 +115,7 @@ const AddNewOfferContent = () => {
     setLoading(true);
     startLoading();
     try {
-      setError(null);
+      setErrors({});
       const response = await CreateRestaurant(
         `${RESTAURANT_URLS.CREATE_RESTAURANTS}`,
         {
@@ -127,7 +152,7 @@ const AddNewOfferContent = () => {
       }
     } catch (error) {
       console.error("Error creating restaurant:", error);
-      setError("Failed to create restaurant. Please try again later.");
+      setErrors({ general: "Failed to create restaurant. Please try again later." });
       if (restaurantOffers[0].image) {
         try {
           await deleteFileFromS3(restaurantOffers[0].image);
@@ -144,30 +169,21 @@ const AddNewOfferContent = () => {
   };
 
   const handleCreateOffer = async () => {
-    setLoading(true);
-    startLoading();
-
+    setFormSubmitted(true);
     if (!id || source !== "offer") {
       toast.error("Invalid Id or source");
       stopLoading();
       return;
     }
 
-    const isAnyOfferFieldEmpty = Object.values(restaurantOffers[0]).some(
-      (value) => value.trim() === ""
-    );
-
-    if (isAnyOfferFieldEmpty) {
-      setTimeout(() => {
-        stopLoading();
-        toast.error("All fields in the offer are required.");
-      }, 800);
+    if (!validateForm()) {
+      toast.error("All fields in the offer are required.");
       return;
     }
 
     setIsUploading(true);
     try {
-      setError(null);
+      setErrors({});
       const response = await CreateRestaurantOffer(
         `${RESTAURANT_URLS.CREATE_RESTAURANTS_OFFER}`,
         {
@@ -194,7 +210,6 @@ const AddNewOfferContent = () => {
         toast.error(
           response.data.message || "Error occurred while creating the offer."
         );
-        // Cleanup uploaded offer image on failure
         if (restaurantOffers[0].image) {
           try {
             await deleteFileFromS3(restaurantOffers[0].image);
@@ -208,8 +223,7 @@ const AddNewOfferContent = () => {
     } catch (error) {
       console.error("Error creating offer:", error);
       toast.error("Something went wrong");
-      setError("Failed to create offer. Please try again later.");
-      // Cleanup uploaded offer image on failure
+      setErrors({ general: "Failed to create offer. Please try again later." });
       if (restaurantOffers[0].image) {
         try {
           await deleteFileFromS3(restaurantOffers[0].image);
@@ -228,9 +242,9 @@ const AddNewOfferContent = () => {
 
   const handleBack = () => {
     if (source === "offer" && id) {
-      router.push(`/restaurants/${id}`); // Navigate to restaurant details page if coming from offer
+      router.push(`/restaurants/${id}`);
     } else {
-      router.push("/restaurants"); // Navigate to restaurants list by default
+      router.push("/restaurants");
     }
   };
 
@@ -245,7 +259,7 @@ const AddNewOfferContent = () => {
         Back
       </Button>
 
-      <div className="bg-[#0a0e11] rounded border border-[#2e2e2e] p-4  md:px-7 flex flex-col gap-2.5">
+      <div className="bg-[#0a0e11] rounded border border-[#2e2e2e] p-4 md:px-7 flex flex-col gap-2.5">
         <h2 className="text-xl leading-loose">Offer Details</h2>
         <form>
           <div className="flex flex-col lg:flex-row gap-10">
@@ -256,6 +270,9 @@ const AddNewOfferContent = () => {
                   placeholder="Upload Offer Logo"
                   className="rounded-[50%]"
                 />
+                {errors.image && (
+                  <p className="text-red-500 text-xs mt-1">{errors.image}</p>
+                )}
                 {currentImageKey && (
                   <div className="text-xs text-gray-400 mt-2 hidden">
                     Uploaded image key: {currentImageKey}
@@ -265,11 +282,11 @@ const AddNewOfferContent = () => {
             </div>
             <div className="flex flex-col gap-7 w-full">
               <div className="flex flex-col gap-3">
-                <Label htmlFor="name" className="text-sm">
+                <Label htmlFor="offerName" className="text-sm">
                   Offer Name
                 </Label>
                 <Input
-                  id="name"
+                  id="offerName"
                   type="text"
                   placeholder="Offer Name"
                   required
@@ -277,13 +294,16 @@ const AddNewOfferContent = () => {
                   onChange={handleChange}
                   name="offerName"
                 />
+                {errors.offerName && (
+                  <p className="text-red-500 text-xs mt-1">{errors.offerName}</p>
+                )}
               </div>
               <div className="flex flex-col gap-3">
-                <Label htmlFor="name" className="text-sm">
+                <Label htmlFor="visits" className="text-sm">
                   Stamps
                 </Label>
                 <Input
-                  id="name"
+                  id="visits"
                   type="number"
                   placeholder="Stamps"
                   required
@@ -291,37 +311,54 @@ const AddNewOfferContent = () => {
                   onChange={handleChange}
                   name="visits"
                 />
+                {errors.visits && (
+                  <p className="text-red-500 text-xs mt-1">{errors.visits}</p>
+                )}
               </div>
               <div className="flex flex-col gap-3">
-                <Label className="text-sm">Description</Label>
+                <Label htmlFor="description" className="text-sm">
+                  Description
+                </Label>
                 <Textarea
+                  id="description"
                   className="!bg-transparent h-24"
                   value={restaurantOffers[0].description}
                   onChange={handleChange}
                   name="description"
                 />
+                {errors.description && (
+                  <p className="text-red-500 text-xs mt-1">{errors.description}</p>
+                )}
               </div>
               <div className="flex flex-col gap-3">
-                <Label className="text-sm bg-[#182226] py-4.5 px-5 rounded-lg">
+                <Label htmlFor="unlockRewards" className="text-sm bg-[#182226] py-4.5 px-5 rounded-lg">
                   Unlock Rewards
                 </Label>
                 <Textarea
+                  id="unlockRewards"
                   className="!bg-[transparent] h-24"
                   value={restaurantOffers[0].unlockRewards}
                   onChange={handleChange}
                   name="unlockRewards"
                 />
+                {errors.unlockRewards && (
+                  <p className="text-red-500 text-xs mt-1">{errors.unlockRewards}</p>
+                )}
               </div>
               <div className="flex flex-col gap-3">
-                <Label className="text-sm bg-[#182226] py-4.5 px-5 rounded-lg">
+                <Label htmlFor="redeemInStore" className="text-sm bg-[#182226] py-4.5 px-5 rounded-lg">
                   Redeem In-Store
                 </Label>
                 <Textarea
+                  id="redeemInStore"
                   className="!bg-transparent h-24"
                   value={restaurantOffers[0].redeemInStore}
                   onChange={handleChange}
                   name="redeemInStore"
                 />
+                {errors.redeemInStore && (
+                  <p className="text-red-500 text-xs mt-1">{errors.redeemInStore}</p>
+                )}
               </div>
               {source === "offer" && id ? (
                 <Button
@@ -336,6 +373,7 @@ const AddNewOfferContent = () => {
                   className="max-w-max px-[30px] py-2.5 bg-[#e4bc84] rounded inline-flex justify-center items-center gap-2 text-[#0a0e11] text-sm font-normal"
                   type="button"
                   onClick={handleRestaurantSave}
+                  disabled={isUploading || loading}
                 >
                   Save Restaurant and offer
                 </Button>
@@ -348,7 +386,6 @@ const AddNewOfferContent = () => {
   );
 };
 
-// Wrap the component in Suspense
 const Page = () => {
   return (
     <Suspense fallback={<div>Loading...</div>}>

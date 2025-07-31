@@ -81,12 +81,13 @@ export function Otp() {
         >
           Submit
         </Button>
-        <div className="flex items-center justify-start mt-[-4px]">
+         <div className="flex items-center justify-center gap-2  mt-[-4px] font-normal">
+         <span> Remember Password? </span>
           <a
-            href="/forgot-password"
-            className="text-sm text-primary underline-offset-2 hover:underline"
+            href="/"
+            className="text-m text-[#E4BC84] underline-offset-2 hover:underline "
           >
-            Get Back
+            Login
           </a>
         </div>
       </form>

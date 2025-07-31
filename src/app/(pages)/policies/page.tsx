@@ -29,7 +29,7 @@ const Page = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("help&support");
-  const {startLoading, stopLoading} = useLoading()
+  const { startLoading, stopLoading } = useLoading();
 
   const fetchPolicyData = async (type: string) => {
     const stateKey =
@@ -46,7 +46,7 @@ const Page = () => {
     try {
       setError(null);
       setLoading(true);
-      startLoading()
+      startLoading();
       const response = await GetPolicies(POLICIES_URL.GET_POLCIIES(type));
       if (response.status === 200) {
         const policyData = response.data.data;
@@ -58,21 +58,15 @@ const Page = () => {
           ...prev,
           [stateKey]: true,
         }));
-        // toast.success(
-        //   response.data.message || `Fetched ${type} policy successfully`
-        // );
       } else if (response.status === 404) {
         setEditorContents((prev) => ({
           ...prev,
-          [stateKey]: "", 
+          [stateKey]: "",
         }));
         setPolicyExists((prev) => ({
           ...prev,
-          [stateKey]: false, 
+          [stateKey]: false,
         }));
-        toast(`No ${type} policy found. You can create a new one.`);
-      } else {
-        toast(response.data.message || `Failed to fetch ${type} policy`);
       }
     } catch (error: any) {
       console.error(`Error fetching ${type} policy:`, error);
@@ -85,30 +79,29 @@ const Page = () => {
           ...prev,
           [stateKey]: false,
         }));
-        toast.error(`No ${type} policy found. You can create a new one.`);
       } else {
         setError(`Failed to fetch ${type} policy. Please try again.`);
-        toast.error(`Failed to fetch ${type} policy.`);
       }
     } finally {
       setLoading(false);
-      stopLoading()
+      stopLoading();
     }
   };
 
   useEffect(() => {
-    fetchPolicyData("support");
+    const fetchAllPolicies = async () => {
+      await Promise.all([
+        fetchPolicyData("support"),
+        fetchPolicyData("terms"),
+        fetchPolicyData("privacyPolicy"),
+      ]);
+    };
+    fetchAllPolicies();
   }, []);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    const type =
-      value === "help&support"
-        ? "support"
-        : value === "terms&condition"
-        ? "terms"
-        : "privacyPolicy";
-    fetchPolicyData(type);
+    // No need to fetch policy data here since all policies are fetched on mount
   };
 
   const handleContentChange = (tab: string, content: string) => {
@@ -123,11 +116,14 @@ const Page = () => {
   };
 
   const handleSubmit = async () => {
-    if (
-      !editorContents.helpAndSupport ||
-      !editorContents.termsAndConditions ||
-      !editorContents.privacyPolicy
-    ) {
+    // Validate only fields that are not marked as existing and empty
+    const hasEmptyFields = Object.keys(editorContents).some(
+      (key) =>
+        !editorContents[key as keyof typeof editorContents].trim() &&
+        !policyExists[key as keyof typeof policyExists]
+    );
+
+    if (hasEmptyFields) {
       toast.error("All policy fields are required.");
       return;
     }
@@ -164,13 +160,12 @@ const Page = () => {
           termsAndConditions: false,
           privacyPolicy: false,
         });
-        fetchPolicyData(
-          activeTab === "help&support"
-            ? "support"
-            : activeTab === "terms&condition"
-            ? "terms"
-            : "privacyPolicy"
-        );
+        // Re-fetch all policies to ensure consistency
+        await Promise.all([
+          fetchPolicyData("support"),
+          fetchPolicyData("terms"),
+          fetchPolicyData("privacyPolicy"),
+        ]);
       } else {
         toast.error(response.data.message || "Failed to save policies");
       }
@@ -180,7 +175,7 @@ const Page = () => {
       toast.error("Failed to save policies.");
     } finally {
       setLoading(false);
-      stopLoading()
+      stopLoading();
     }
   };
 

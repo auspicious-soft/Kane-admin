@@ -17,7 +17,7 @@ export function ForgotPassword() {
   const router = useRouter();
   const { startLoading, stopLoading } = useLoading();
 
-const forgotPassword = async (e: React.FormEvent) => {
+  const forgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email) {
@@ -39,14 +39,19 @@ const forgotPassword = async (e: React.FormEvent) => {
       }
     } catch (error: any) {
       console.error("Error:", error);
-      toast.error(error?.response?.data?.message || "An error occurred. Please try again.");
+      toast.error(
+        error?.response?.data?.message || "An error occurred. Please try again."
+      );
     } finally {
       setLoading(false);
       stopLoading();
     }
   };
   return (
-    <form onSubmit={forgotPassword} className="p-4 md:p-9 space-y-6 w-full max-w-[500px] mx-auto">
+    <form
+      onSubmit={forgotPassword}
+      className="p-4 md:p-9 space-y-6 w-full max-w-[500px] mx-auto"
+    >
       <div className="text-center flex flex-col gap-5 !mb-10">
         <Image
           src="/images/auth-logo.png"
@@ -62,18 +67,16 @@ const forgotPassword = async (e: React.FormEvent) => {
         <Label htmlFor="email" className="text-sm">
           Email Address
         </Label>
-        <Input 
-          id="email" 
-          type="email" 
-          placeholder="m@example.com" 
-          required 
-          value={email} 
+        <Input
+          id="email"
+          type="email"
+          placeholder="m@example.com"
+          required
+          value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={loading}
         />
       </div>
-      
-     
 
       <Button
         type="submit"
@@ -90,14 +93,15 @@ const forgotPassword = async (e: React.FormEvent) => {
         )}
       </Button>
 
-        <div className="flex items-center justify-start mt-[-4px]">
-    <a
-      href="/"
-      className="text-sm text-primary underline-offset-2 hover:underline"
-    >
-      Back To Login
-    </a>
-  </div>
+        <div className="flex items-center justify-center gap-2  mt-[-4px] font-normal">
+         <span> Remember Password? </span>
+          <a
+            href="/"
+            className="text-m text-[#E4BC84] underline-offset-2 hover:underline "
+          >
+            Login
+          </a>
+        </div>
     </form>
   );
 }

@@ -121,23 +121,25 @@ export function LoginForm() {
     </div>
   </div>
 
-  <div className="flex items-center justify-between mt-[-4px]">
+ 
+  <Button
+    type="submit"
+    className="w-full text-sm !bg-[#E4BC84] rounded min-h-12.5 mt-3"
+    disabled={loading}
+  >
+    {loading ? "Logging in..." : "Log In"}
+  </Button>
+
+   <div className="flex items-center justify-center mt-[-4px]">
    
     <a
       href="/forgot-password"
-      className="text-sm text-primary underline-offset-2 hover:underline"
+      className="text-m text-primary hover:text-[#E4BC84] underline-offset-2 hover:underline"
     >
       Forgot your password?
     </a>
   </div>
 
-  <Button
-    type="submit"
-    className="w-full text-sm !bg-[#E4BC84] rounded min-h-12.5 mt-5"
-    disabled={loading}
-  >
-    {loading ? "Logging in..." : "Log In"}
-  </Button>
 </form>
     </>
   );

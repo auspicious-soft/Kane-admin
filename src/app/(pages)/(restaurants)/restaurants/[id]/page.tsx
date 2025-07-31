@@ -74,12 +74,10 @@ const Page = () => {
     unlockRewards: "",
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [offerImagePreview, setOfferImagePreview] = useState<string | null>(
-    null
-  );
-  const [isRestaurantImageLoading, setIsRestaurantImageLoading] =
-    useState(true);
+  const [offerImagePreview, setOfferImagePreview] = useState<string | null>(null);
+  const [isRestaurantImageLoading, setIsRestaurantImageLoading] = useState(true);
   const [isOfferImageLoading, setIsOfferImageLoading] = useState(true);
+  const [isImageChanged, setIsImageChanged] = useState(false); // New state to track image changes
 
   useEffect(() => {
     if (!id) return;
@@ -91,7 +89,6 @@ const Page = () => {
         setLoading(true);
         setIsRestaurantImageLoading(true);
         setIsOfferImageLoading(true);
-        setIsOfferImageLoading(true);
         const response = await GetRestaurantById(
           RESTAURANT_URLS.GET_SINGLE_RESTAURANT(id as string)
         );
@@ -99,6 +96,7 @@ const Page = () => {
           const restData = response.data.data.restaurant;
           const restOfferData = response.data.data.offers;
           let imageUrl = "";
+          let imageKey = restData.image || ""; // Store the S3 key
           if (restData.image) {
             try {
               const { fileUrl } = await getFileWithMetadata(restData.image);
@@ -142,7 +140,7 @@ const Page = () => {
           setRestaurantOffersData(processedOffers);
           setEditFormData({
             restaurantName: restData.restaurantName || "",
-            image: imageUrl || "", // Store S3 key instead of URL
+            image: imageKey, // Store S3 key instead of URL
           });
           setEditRestroOfferData({
             offerName: "",
@@ -190,13 +188,15 @@ const Page = () => {
       setOfferImagePreview(offer.image || null);
     }
   };
+
   const handleCancelEdit = () => {
     setIsEditMode(false);
     setEditFormData({
       restaurantName: restaurantData.restaurantName,
-      image: restaurantData.logo,
+      image: restaurantData.logo, // Use the original logo (URL or empty)
     });
     setImagePreview(restaurantData.logo);
+    setIsImageChanged(false); // Reset image changed flag
     setEditRestroOfferData({
       offerName: selectedOffer?.offerName || "",
       image: selectedOffer?.image || "",
@@ -207,6 +207,7 @@ const Page = () => {
     });
     setOfferImagePreview(selectedOffer?.image || null);
   };
+
   const handleSaveEditOffer = async () => {
     if (!id || !selectedOffer?._id) return;
 
@@ -298,6 +299,7 @@ const Page = () => {
         image: "",
       }));
       setImagePreview(null);
+      setIsImageChanged(false); // No image change
       return;
     }
     try {
@@ -307,6 +309,7 @@ const Page = () => {
         image: key, // Store S3 key
       }));
       setImagePreview(fileUrl); // Update preview
+      setIsImageChanged(true); // Mark image as changed
     } catch (error) {
       console.error("Error fetching uploaded image:", error);
       setEditFormData((prev) => ({
@@ -314,6 +317,7 @@ const Page = () => {
         image: "",
       }));
       setImagePreview(null);
+      setIsImageChanged(false); // No image change
       toast.error("Failed to load uploaded image.");
     }
   };
@@ -354,19 +358,22 @@ const Page = () => {
     startLoading();
     setIsRestaurantImageLoading(true);
     try {
+      // Only include image in payload if it has been changed
+      const payload = {
+        restaurantName: editFormData.restaurantName,
+        ...(isImageChanged && { image: editFormData.image }),
+      };
+
       const response = await updateRestaurantById(
         `${RESTAURANT_URLS.UPDATE_RESTAURANT(id as string)}`,
-        {
-          restaurantName: editFormData.restaurantName,
-          image: editFormData.image,
-        }
+        payload
       );
       if (response.status === 200) {
         toast.success(
           response.data.message || "Restaurant Updated Successfully."
         );
         let imageUrl = imagePreview || "/images/rest-image.png";
-        if (editFormData.image && !editFormData.image.startsWith("http")) {
+        if (isImageChanged && editFormData.image && !editFormData.image.startsWith("http")) {
           try {
             const { fileUrl } = await getFileWithMetadata(editFormData.image);
             imageUrl = fileUrl;
@@ -385,10 +392,11 @@ const Page = () => {
         });
         setEditFormData({
           restaurantName: editFormData.restaurantName,
-          image: editFormData.image, // Keep S3 key
+          image: isImageChanged ? editFormData.image : restaurantData.logo, // Keep S3 key or original logo
         });
         setImagePreview(imageUrl); // Ensure imagePreview is updated
         setIsEditMode(false);
+        setIsImageChanged(false); // Reset image changed flag
       } else {
         toast.error(
           response.data.message ||

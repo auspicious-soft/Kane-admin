@@ -79,7 +79,7 @@ export default function UsersList() {
         const apiUsers = response.data.data.users;
         const mappedUsers: User[] = await Promise.all(
           apiUsers.map(async (user: any, i: number) => {
-            let imageUrl = "/images/user-placeholder.png";
+            let imageUrl =dummyImg.src;
             if (user.profilePicture && user.profilePicture !== "") {
               try {
                 const { fileUrl } = await getFileWithMetadata(
@@ -91,9 +91,21 @@ export default function UsersList() {
                   `Error fetching image for user ${user._id}:`,
                   error
                 );
-                imageUrl = "/images/user-placeholder.png";
+                imageUrl = dummyImg.src;
               }
             }
+
+            const formattedDate = user.createdAt
+            ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                month: "numeric",
+                day: "numeric",
+                year: "numeric",
+              })
+            : new Date().toLocaleDateString("en-US", {
+                month: "numeric",
+                day: "numeric",
+                year: "numeric",
+              });
 
             return {
               _id: user._id,
@@ -112,7 +124,7 @@ export default function UsersList() {
               points: user.points || 0,
               status: user.isBlocked ? "Blocked" : "Active",
               stamps: user.stamps?.toString() || "0",
-              date: user.date || new Date().toLocaleDateString(),
+              date: formattedDate,
             };
           })
         );
@@ -220,16 +232,7 @@ export default function UsersList() {
     <div className="flex flex-col gap-2.5">
       <div className="flex justify-between items-center">
         <h2 className="text-xl leading-loose">Users List</h2>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400">Show</span>
-          <CustomSelect
-            value={usersPerPage.toString()}
-            onValueChange={handleUsersPerPageChange}
-            options={selectOptions}
-            placeholder="Select"
-            className="w-[100px]"
-          />
-        </div>
+       
       </div>
       <div className="rounded bg-[#182226] border border-[#2e2e2e] text-[#c5c5c5] overflow-x-auto">
         <Table>
@@ -329,7 +332,7 @@ export default function UsersList() {
                     <div className="flex items-center gap-2">
                       <Avatar className="size-4">
                         <AvatarImage src={user.profilePic || dummyImg.src} />
-                        <AvatarFallback>CN</AvatarFallback>
+                        {/* <AvatarFallback>CN</AvatarFallback> */}
                       </Avatar>
                       <span>{user.fullName}</span>
                     </div>
@@ -366,6 +369,18 @@ export default function UsersList() {
           </div>
           <Pagination>
             <PaginationContent>
+              <PaginationItem>
+              <div className="flex items-center gap-2 mr-2">
+                <span className="text-sm text-gray-400">Show</span>
+                <CustomSelect
+                  value={usersPerPage.toString()}
+                  onValueChange={handleUsersPerPageChange}
+                  options={selectOptions}
+                  placeholder="Select"
+                  className="w-[100px]"
+                />
+              </div>
+            </PaginationItem>
               <PaginationItem>
                 <PaginationLink
                   href="#"

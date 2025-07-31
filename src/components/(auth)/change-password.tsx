@@ -95,7 +95,7 @@ export function ChangePassword() {
               onChange={(e) => setNewPassword(e.target.value)}
             />
             <div
-              className="absolute right-4 top-4  inset-y translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+              className="absolute right-4 top-2  inset-y translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
               onClick={() => setShowPassword((prev) => !prev)}
             >
               {showPassword ? (
@@ -124,7 +124,7 @@ export function ChangePassword() {
               onChange={(e) => setConfirmNewPassword(e.target.value)}
             />
             <div
-              className="absolute right-4 top-4  inset-y translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+              className="absolute right-4 top-2  inset-y translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
               onClick={() => setShowConfirmPassword((prev) => !prev)}
             >
               {showConfirmPassword ? (
@@ -140,17 +140,18 @@ export function ChangePassword() {
         </div>
         <Button
           type="submit"
-          className="w-full text-sm !bg-[#E4BC84] rounded min-h-12.5 mt-5"
+          className="w-full text-sm !bg-[#E4BC84] rounded min-h-12.5 mt-2"
         >
           Update Password
         </Button>
 
-          <div className="flex items-center justify-start mt-[-4px]">
+        <div className="flex items-center justify-center gap-2  mt-[-4px] font-normal">
+         <span> Remember Password? </span>
           <a
-            href="/otp"
-            className="text-sm text-primary underline-offset-2 hover:underline"
+            href="/"
+            className="text-m text-[#E4BC84] underline-offset-2 hover:underline "
           >
-           Get Back
+            Login
           </a>
         </div>
 

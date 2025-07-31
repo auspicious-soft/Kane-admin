@@ -92,19 +92,16 @@ export default function OffersDetails({
         <Table>
           <TableHeader>
             <TableRow className="text-xs">
-              <TableHead>S.No</TableHead>
-              {/* <TableHead>Restaurant Name</TableHead> */}
-              <TableHead>Offer Name</TableHead>
-               <TableHead>Status</TableHead>
-              {/* <TableHead>Action</TableHead> */}
-              {/* <TableHead>Date</TableHead> */}
+              <TableHead className="tex">S.No</TableHead>
+              <TableHead className="text-center">Offer Name</TableHead>
+              <TableHead className="text-right">Status</TableHead>
             </TableRow>
           </TableHeader>
           {loading ? (
             <TableBody>
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={3} // Updated colSpan to match the number of columns
                   className="p-5 text-center text-sm text-gray-400"
                 >
                   Loading...
@@ -115,7 +112,7 @@ export default function OffersDetails({
             <TableBody>
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={3} // Updated colSpan to match the number of columns
                   className="p-5 text-center text-sm text-gray-400"
                 >
                   No Data found.
@@ -129,16 +126,13 @@ export default function OffersDetails({
                   key={history.id}
                   className={`${i % 2 === 0 ? "bg-[#0A0E11]" : "bg-[#182226]"}`}
                 >
-                  <TableCell>
+                  <TableCell className="text">
                     <span>{(currentPage - 1) * HISTORY_PER_PAGE + i + 1}</span>
                   </TableCell>
-                  {/* <TableCell>
-                    <span>{history.restaurantName}</span>
-                  </TableCell> */}
-                  <TableCell>{history.offerName}</TableCell>
-                  <TableCell>
-{history.type === 'redeem' ? 'Used' : history.type === 'earn' ? 'Not Used' : ""}                    </TableCell>
-                  {/* <TableCell>{history.date}</TableCell> */}
+                  <TableCell className="text-center">{history.offerName}</TableCell>
+                  <TableCell className="text-right">
+                    {history.type === "redeem" ? "Used" : history.type === "earn" ? "Not Used" : ""}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

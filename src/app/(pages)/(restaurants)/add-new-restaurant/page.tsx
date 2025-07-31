@@ -176,7 +176,7 @@ const Page = () => {
           <h2 className="text-xl leading-loose">Restaurant Offers</h2>
           <div
             onClick={handleRedirect}
-            className="px-[30px] py-2.5 bg-[#e4bc84] rounded inline-flex justify-center items-center gap-2 text-[#0a0e11] text-sm font-normal"
+            className="px-[30px] py-2.5 bg-[#e4bc84] rounded inline-flex justify-center items-center gap-2 text-[#0a0e11] text-sm font-normal cursor-pointer"
           >
             Add New Offers
           </div>
