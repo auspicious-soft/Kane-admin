@@ -92,17 +92,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = React.useState(false);
   const handleLogout = async () => {
     try {
-      localStorage.removeItem("token");
-      await signOut({
-        redirect: false,
-      });
-      router.push("/");
+      signOut({ callbackUrl: "/" });
     } catch (error) {
-      localStorage.removeItem("token");
-      await signOut({
-        redirect: false,
-      });
-      router.push("/");
+        signOut({ callbackUrl: "/" });
+
     }
   };
 
