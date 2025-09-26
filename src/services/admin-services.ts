@@ -84,6 +84,20 @@ export const getUserOfferAndRedemptionHistory =  async(route:string) =>{
     return axiosInstance.get(route)
 }
 
+export const UserDetailsWithBarCode =  async(route:string) =>{
+    const axiosInstance = await getAxiosInstance()
+    return axiosInstance.get(route)
+}
+
+export const ApplyUserOffer = async (route:string, payload:any) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.post(route, payload)
+}
+export const ApplyUserCoupon = async (route:string, payload:any) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.post(route, payload)
+}
+
 // ----------------------- Policies Page ---------------------------
 
 export const createPolicies = async(route:string, payload:any) =>{

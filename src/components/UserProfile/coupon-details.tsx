@@ -19,30 +19,35 @@ import { useLoading } from "@/context/loading-context";
 
 const HISTORY_PER_PAGE = 10;
 
-type OffHistory = {
+type CouponDetails = {
   id: string;
-  restaurantName: string;
-  offerName: string;
-  type: "earn" | "redeem";
+  offerName: string | null;
+  percentage: number | null;
+  points: number;
+  type: "earn" | "redeem" | "percentage" | "offer" | "points";
   date: string;
   identifier: string;
+  isActive?: boolean;
+  mainType?: string;
 };
 
-type OffersDetailsProps = {
-  offerHistory: OffHistory[];
+type CouponDetailsProps = {
+  couponHistory: CouponDetails[];
   currentPage: number;
   setCurrentPage: (page: number) => void;
   totalItems: number;
   loading: boolean;
+  onAction: (coupon: CouponDetails) => void; // Add this prop
 };
 
-export default function OffersDetails({
-  offerHistory,
+export default function CouponDetails({
+  couponHistory,
   currentPage,
   setCurrentPage,
   totalItems,
   loading,
-}: OffersDetailsProps) {
+  onAction,
+}: CouponDetailsProps) {
   const { startLoading, stopLoading } = useLoading();
 
   useEffect(() => {
@@ -92,28 +97,29 @@ export default function OffersDetails({
         <Table>
           <TableHeader>
             <TableRow className="text-xs">
-              <TableHead className="tex">S.No</TableHead>
-              <TableHead className="text-center">Offer Name</TableHead>
-              <TableHead className="text-center">Restaurant Name</TableHead>
+              <TableHead>S.No</TableHead>
+              <TableHead className="text-center">Worth Points</TableHead>
+              <TableHead className="text-center">Details</TableHead>
               <TableHead className="text-right">Status</TableHead>
+              <TableHead className="text-center">Action</TableHead>
             </TableRow>
           </TableHeader>
           {loading ? (
             <TableBody>
               <TableRow>
                 <TableCell
-                  colSpan={3} // Updated colSpan to match the number of columns
+                  colSpan={4}
                   className="p-5 text-center text-sm text-gray-400"
                 >
                   Loading...
                 </TableCell>
               </TableRow>
             </TableBody>
-          ) : offerHistory.length === 0 ? (
+          ) : couponHistory.length === 0 ? (
             <TableBody>
               <TableRow>
                 <TableCell
-                  colSpan={3} // Updated colSpan to match the number of columns
+                  colSpan={4}
                   className="p-5 text-center text-sm text-gray-400"
                 >
                   No Data found.
@@ -122,27 +128,34 @@ export default function OffersDetails({
             </TableBody>
           ) : (
             <TableBody>
-              {offerHistory.map((history, i) => (
+              {couponHistory.map((coupon, i) => (
                 <TableRow
-                  key={history.id}
+                  key={coupon.id}
                   className={`${i % 2 === 0 ? "bg-[#0A0E11]" : "bg-[#182226]"}`}
                 >
-                  <TableCell className="text">
+                  <TableCell>
                     <span>{(currentPage - 1) * HISTORY_PER_PAGE + i + 1}</span>
                   </TableCell>
                   <TableCell className="text-center">
-                    {history.offerName}
+                    {coupon.points}
                   </TableCell>
                   <TableCell className="text-center">
-                    {history.restaurantName}
+                    {coupon.type === "percentage"
+                      ? `${coupon.percentage}%`
+                      : coupon.type === "offer"
+                      ? coupon.offerName
+                      : "N/A"}
                   </TableCell>
-
                   <TableCell className="text-right">
-                    {history.type === "redeem"
-                      ? "Used"
-                      : history.type === "earn"
-                      ? "Not Used"
-                      : ""}
+                    {coupon.mainType}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <button
+                      className="bg-[#e4bc84] cursor-pointer rounded px-4 py-2 text-sm text-[#0a0e11]"
+                      onClick={() => onAction(coupon)}
+                    >
+                      Action
+                    </button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -151,10 +164,10 @@ export default function OffersDetails({
         </Table>
       </div>
 
-      {!loading && offerHistory.length > 0 && (
+      {!loading && couponHistory.length > 0 && (
         <div className="flex justify-between flex-col gap-2 items-center mt-2 text-sm text-gray-400 md:flex-row">
           <div className="flex text-[#c5c5c5] text-xs font-normal">
-            Showing {offerHistory.length} results of {totalItems}
+            Showing {couponHistory.length} results of {totalItems}
           </div>
           <Pagination>
             <PaginationContent>

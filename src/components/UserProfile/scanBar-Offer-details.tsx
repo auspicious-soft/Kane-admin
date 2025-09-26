@@ -17,9 +17,10 @@ import {
 } from "@/components/ui/pagination";
 import { useLoading } from "@/context/loading-context";
 
+
 const HISTORY_PER_PAGE = 10;
 
-type OffHistory = {
+type ScanOffHistory = {
   id: string;
   restaurantName: string;
   offerName: string;
@@ -28,23 +29,28 @@ type OffHistory = {
   identifier: string;
 };
 
-type OffersDetailsProps = {
-  offerHistory: OffHistory[];
+type ScanOffersDetailsProps = {
+  offerHistory: ScanOffHistory[];
   currentPage: number;
   setCurrentPage: (page: number) => void;
   totalItems: number;
   loading: boolean;
+    onAction: (offer: ScanOffHistory) => void; // Add this prop
+
 };
 
-export default function OffersDetails({
+export default function ScanOffersDetails({
   offerHistory,
   currentPage,
   setCurrentPage,
   totalItems,
   loading,
-}: OffersDetailsProps) {
+  onAction
+}: ScanOffersDetailsProps) {
   const { startLoading, stopLoading } = useLoading();
-
+ const [selectedOffer, setSelectedOffer] = useState<ScanOffHistory | null>(
+    null
+  );
   useEffect(() => {
     if (loading) {
       startLoading();
@@ -96,6 +102,8 @@ export default function OffersDetails({
               <TableHead className="text-center">Offer Name</TableHead>
               <TableHead className="text-center">Restaurant Name</TableHead>
               <TableHead className="text-right">Status</TableHead>
+                            <TableHead className="text-center">Action</TableHead>
+
             </TableRow>
           </TableHeader>
           {loading ? (
@@ -144,6 +152,14 @@ export default function OffersDetails({
                       ? "Not Used"
                       : ""}
                   </TableCell>
+              <TableCell className="text-center">
+  <button
+    className="bg-[#e4bc84] cursor-pointer rounded px-4 py-2 text-sm text-[#0a0e11]"
+    onClick={() => onAction(history)}
+  >
+    Action
+  </button>
+</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -174,7 +190,7 @@ export default function OffersDetails({
               {getPagination(currentPage, totalPages).map((page, idx) => (
                 <PaginationItem key={idx}>
                   {page === "..." ? (
-                    <span className="bg-white text-[#0a0e11] px-2 py-[7px] size-auto min-w-8 rounded-md inline-flex flex-col justify-center items-center gap-2.5 text-xs font-normal transition-colors">
+                    <span className="bg-white text-[#0a0e11] px-2 py-[7px] size-auto min-w-8 rounded-md inline-flex justify-center items-center text-xs font-normal transition-colors">
                       ...
                     </span>
                   ) : (

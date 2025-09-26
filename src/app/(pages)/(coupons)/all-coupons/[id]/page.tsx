@@ -13,6 +13,7 @@ import {
   getAchievementById,
   getAllRestaurants,
   getCouponById,
+  GetRestaurantById,
   updateAchievementById,
   updateCouponById,
 } from "@/services/admin-services";
@@ -28,6 +29,10 @@ const Page = () => {
   const [error, setError] = useState<string | null>(null);
   const { startLoading, stopLoading } = useLoading();
   const [coupons, setCoupons] = useState([]);
+  const [offers, setOffers] = useState<any[]>([]);
+const [selectedOffer, setSelectedOffer] = useState<string>("");
+const [selectedRestaurant, setSelectedRestaurant] = useState<string>("");
+
   const router = useRouter();
   const [couponData, setCouponData] = useState({
     couponName: "",
@@ -36,6 +41,8 @@ const Page = () => {
     points: "",
     expiry: "",
     percentage: "",
+    restaurantName: "",
+    offerId: "",
   });
   const [editCouponData, setEditCouponData] = useState({
     couponName: "",
@@ -44,6 +51,7 @@ const Page = () => {
     points: "",
     expiry: "",
     percentage: "",
+    offerId: "",
   });
 
   useEffect(() => {
@@ -57,17 +65,44 @@ const Page = () => {
         const response = await getCouponById(
           COUPON_URLS.GET_SINGLE_COUPON(id as string)
         );
-        if (response.status === 200) {
-          const couponD = response.data.data;
-          setCouponData(couponD);
-          setEditCouponData({
-            couponName: couponD.couponName,
+       if (response.status === 200) {
+        const couponD = response.data.data;
+
+        // Extract restaurantId and offerId
+        const restaurantId = couponD.offerName?.restaurantId?._id;
+        const offerId = couponD.offerName?._id;
+          setCouponData({
+            couponName: couponD.offerName,
             offerName: couponD.offerName,
             type: couponD.type,
             points: couponD.points,
             expiry: couponD.expiry,
             percentage: couponD.percentage,
+            restaurantName: couponD.offerName.restaurantId.restaurantName,
+            offerId,
           });
+          setEditCouponData({
+            couponName: couponD.couponName,
+            offerName: offerId,
+            type: couponD.type,
+            points: couponD.points,
+            expiry: couponD.expiry,
+            percentage: couponD.percentage,
+          offerId,
+          });
+            setSelectedRestaurant(restaurantId);
+        setSelectedOffer(offerId);
+
+         if (restaurantId) {
+          const restResponse = await getAchievementById(
+            RESTAURANT_URLS.GET_SINGLE_RESTAURANT(restaurantId)
+          );
+
+          if (restResponse.status === 200) {
+            const restData = restResponse.data.data;
+            setOffers(restData.offers || []);
+          }
+        }
           toast.success(
             response.data.message || "Coupon details fetched successfully"
           );
@@ -132,6 +167,7 @@ const Page = () => {
           points: "",
           expiry: "",
           percentage: "",
+          offerId: "",
         });
         router.push("/all-coupons");
       } else {
@@ -156,6 +192,8 @@ const Page = () => {
   const handleBack = () => {
     router.push("/all-coupons");
   };
+
+  console.log(couponData, "popopop");
 
   return (
     <div className="flex flex-col gap-1">
@@ -198,22 +236,36 @@ const Page = () => {
               </div>
             </div>
 
-            {editCouponData.type === "offer" && (
-              <div className="grid grid-cols-1 gap-5 md:gap-9">
-                <div className="flex flex-col gap-2.5">
-                  <Label>Offer Name</Label>
-                  <Input
-                    type="text"
-                    value={editCouponData.offerName ?? ""}
-                    onChange={(e) =>
-                      handleInputChange("offerName", e.target.value)
-                    }
-                    placeholder="Enter offer name"
-                    className="h-[100px] !bg-[#0a0e11] rounded border border-[#2e2e2e]"
-                  />
-                </div>
-              </div>
-            )}
+          {editCouponData.type === "offer" && (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-9">
+    <div className="flex flex-col gap-2.5">
+      <Label>Restaurant</Label>
+      <Input
+        type="text"
+        value={couponData.restaurantName ?? ""}
+        disabled
+        className="bg-[#0a0e11] border border-[#2e2e2e] rounded px-4 py-2 text-white opacity-60 cursor-not-allowed"
+      />
+    </div>
+
+    <div className="flex flex-col gap-2.5">
+      <Label>Offer</Label>
+      <select
+        value={editCouponData.offerName ?? ""}
+        onChange={(e) => handleInputChange("offerName", e.target.value)}
+        className="bg-[#0a0e11] border border-[#2e2e2e] rounded px-4 py-2 text-white"
+      >
+        <option value="">Select Offer</option>
+        {offers.map((offer) => (
+          <option key={offer._id} value={offer._id}>
+            {offer.offerName}
+          </option>
+        ))}
+      </select>
+    </div>
+  </div>
+)}
+
 
             {editCouponData.type === "points" && (
               <div className="grid grid-cols-1 gap-5 md:gap-9">

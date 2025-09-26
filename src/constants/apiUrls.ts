@@ -40,6 +40,10 @@ export const USER_URLS = {
     type: string
   ) =>
     `${API_BASE_ADMIN}/users/${id}/history?type=${type}&page=${page}&limit=${limit}`,
+    GET_USER_WITH_BARCODE:(  id: string,)=>`${API_BASE_ADMIN}/user-barcode/${id}`,
+      APPLY_USER_OFFER: `${API_BASE_ADMIN}/offer-history/apply`,
+  APPLY_USER_COUPON: `${API_BASE_ADMIN}/coupon-history/apply`,
+
 };
 
 export const POLICIES_URL = {

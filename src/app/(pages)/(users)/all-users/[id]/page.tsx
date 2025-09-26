@@ -162,7 +162,7 @@ export default function UserProfile() {
           const mappedOfferHistory: OffHistory[] = historyData.map(
             (item: any) => ({
               id: item._id,
-              restaurantName: item.offerId.restaurantId.restaurantName,
+              restaurantName: item.offerId.restaurantId.restaurantName || "",
               offerName: item.offerId.offerName,
               type: item.type as "earn" | "redeem",
               date: new Date(item.createdAt).toLocaleDateString(),

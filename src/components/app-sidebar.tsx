@@ -16,6 +16,7 @@ import {
   UserIcon,
   Policies,
   CoupanIcon,
+  ScanIcon
 } from "@/lib/svg";
 import {
   AlertDialog,
@@ -60,12 +61,12 @@ const data = {
       icon: RestaurantsIcon,
       matchUrls: ["/add-new-offers", "/add-new-restaurant"],
     },
-    {
-      title: "Achievements",
-      url: "/all-achievements",
-      icon: AchievementsIcon,
-      matchUrls: ["/add-new-achievements"],
-    },
+    // {
+    //   title: "Achievements",
+    //   url: "/all-achievements",
+    //   icon: AchievementsIcon,
+    //   matchUrls: ["/add-new-achievements"],
+    // },
     {
       title: "Policies",
       url: "/policies",
@@ -76,6 +77,12 @@ const data = {
       url: "/all-coupons",
       icon: CoupanIcon,
       matchUrls: ["/add-new-coupons"],
+    },
+     {
+      title: "Scanning",
+      url: "/bar-scan",
+      icon: ScanIcon,
+      matchUrls: ["/bar-scan"],
     },
   ],
   projects: [
