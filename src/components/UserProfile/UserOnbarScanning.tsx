@@ -53,6 +53,7 @@ export default function UserOnBarScanning({
   const {startLoading, stopLoading} = useLoading();
   
   const router = useRouter()
+  
   const handleUpdateUserStatus = async () => {
     if (!userId) {
       toast.error("User ID not found");

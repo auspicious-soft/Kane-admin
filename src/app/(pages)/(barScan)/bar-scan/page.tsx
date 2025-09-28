@@ -69,6 +69,7 @@ export default function UserProfile() {
   const [modalPoints, setModalPoints] = useState<number | "">("");
   const [userId, setUserId] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [isModalOpenCoupon, setIsModalOpenCoupon] = useState(false);
   const fetchUserById = async (id: string) => {
     if (!id) return;
@@ -83,11 +84,12 @@ export default function UserProfile() {
       );
 
       if (!response.data.success) {
-        setErrors("User not found");
-        setUser(null);
-        setOffers([]);
-        setCoupons([]);
-        return;
+       setErrors("User not found");
+      setUser(null);
+      setOffers([]);
+      setCoupons([]);
+      toast.error("Invalid user, No user found!");
+      return;
       }
 
       const u = response.data.data.user;
@@ -127,6 +129,7 @@ export default function UserProfile() {
           identifier: item.identifier,
           date: new Date(item.createdAt).toLocaleDateString(),
           mainType: item.type,
+          couponName:item.couponId.couponName,
         }))
       );
 
@@ -148,10 +151,12 @@ export default function UserProfile() {
         stamps: u.stamps || "0",
       });
     } catch (err) {
-      console.error(err);
-      setErrors("Failed to fetch user");
-      setOffers([]);
-      setCoupons([]);
+     console.error(err);
+    setErrors("Failed to fetch user");
+    setOffers([]);
+    setCoupons([]);
+    setUser(null);
+    toast.error("Failed to fetch user. Try again!");
     } finally {
       setLoading(false);
       stopLoading();
@@ -161,6 +166,8 @@ export default function UserProfile() {
   useEffect(() => {
     if (scannedId) fetchUserById(scannedId);
   }, [scannedId]);
+
+
 
   const handleOpenModal = (offer: any) => {
     setSelectedOffer(offer);
@@ -298,7 +305,7 @@ export default function UserProfile() {
                   <span className="text-green-400">Scanned: {scanned}</span>
                 )}
               </div>
-              <span>{scannedId ? scannedId : ""}</span>
+              <span className="text-center">OR</span>
             </div>
 
             {/* Right - Search User */}
@@ -311,7 +318,12 @@ export default function UserProfile() {
                   type="text"
                   placeholder="Enter User ID"
                   value={manualId}
-                  onChange={(e) => setManualId(e.target.value)}
+                   onChange={(e) => setManualId(e.target.value)}
+  onKeyDown={(e) => {
+    if (e.key === "Enter") {
+      fetchUserById(manualId.trim()); // 👈 Call API when Enter is pressed
+    }
+  }}
                   className="w-full h-12 bg-zinc-950 rounded border border-zinc-800 px-3 text-white focus:outline-none focus:ring-1 focus:ring-orange-300"
                 />
               </div>

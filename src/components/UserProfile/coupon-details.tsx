@@ -29,6 +29,7 @@ type CouponDetails = {
   identifier: string;
   isActive?: boolean;
   mainType?: string;
+  couponName: string;
 };
 
 type CouponDetailsProps = {
@@ -99,6 +100,7 @@ export default function CouponDetails({
             <TableRow className="text-xs">
               <TableHead>S.No</TableHead>
               <TableHead className="text-center">Worth Points</TableHead>
+              <TableHead className="text-center">Coupon Name</TableHead>
               <TableHead className="text-center">Details</TableHead>
               <TableHead className="text-right">Status</TableHead>
               <TableHead className="text-center">Action</TableHead>
@@ -136,9 +138,8 @@ export default function CouponDetails({
                   <TableCell>
                     <span>{(currentPage - 1) * HISTORY_PER_PAGE + i + 1}</span>
                   </TableCell>
-                  <TableCell className="text-center">
-                    {coupon.points}
-                  </TableCell>
+                  <TableCell className="text-center">{coupon.points}</TableCell>
+                  <TableCell className="text-center">{coupon.couponName}</TableCell>
                   <TableCell className="text-center">
                     {coupon.type === "percentage"
                       ? `${coupon.percentage}%`

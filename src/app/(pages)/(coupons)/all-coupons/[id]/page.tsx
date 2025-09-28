@@ -54,47 +54,53 @@ const [selectedRestaurant, setSelectedRestaurant] = useState<string>("");
     offerId: "",
   });
 
-  useEffect(() => {
-    if (!id) return;
 
-    const fetchCouponData = async () => {
-      try {
-        setError(null);
-        startLoading();
-        setLoading(true);
-        const response = await getCouponById(
-          COUPON_URLS.GET_SINGLE_COUPON(id as string)
-        );
-       if (response.status === 200) {
+
+  useEffect(() => {
+  if (!id) return;
+
+  const fetchCouponData = async () => {
+    try {
+      setError(null);
+      startLoading();
+      setLoading(true);
+
+      const response = await getCouponById(
+        COUPON_URLS.GET_SINGLE_COUPON(id as string)
+      );
+
+      if (response.status === 200) {
         const couponD = response.data.data;
 
-        // Extract restaurantId and offerId
-        const restaurantId = couponD.offerName?.restaurantId?._id;
-        const offerId = couponD.offerName?._id;
-          setCouponData({
-            couponName: couponD.offerName,
-            offerName: couponD.offerName,
-            type: couponD.type,
-            points: couponD.points,
-            expiry: couponD.expiry,
-            percentage: couponD.percentage,
-            restaurantName: couponD.offerName.restaurantId.restaurantName,
-            offerId,
-          });
-          setEditCouponData({
-            couponName: couponD.couponName,
-            offerName: offerId,
-            type: couponD.type,
-            points: couponD.points,
-            expiry: couponD.expiry,
-            percentage: couponD.percentage,
-          offerId,
-          });
-            setSelectedRestaurant(restaurantId);
-        setSelectedOffer(offerId);
+        // Base data setup (for all types)
+        setCouponData({
+          couponName: couponD.couponName,
+          offerName: couponD?.offerName ?? "",
+          type: couponD.type,
+          points: couponD.points ?? "",
+          expiry: couponD.expiry,
+          percentage: couponD.percentage ?? "",
+          restaurantName: couponD?.offerName?.restaurantId?.restaurantName ?? "",
+          offerId: couponD?.offerName?._id ?? "",
+        });
 
-         if (restaurantId) {
-          const restResponse = await getAchievementById(
+        setEditCouponData({
+          couponName: couponD.couponName,
+          offerName: couponD?.offerName?._id ?? "",
+          type: couponD.type,
+          points: couponD.points ?? "",
+          expiry: couponD.expiry,
+          percentage: couponD.percentage ?? "",
+          offerId: couponD?.offerName?._id ?? "",
+        });
+
+        // ✅ Only fetch restaurant/offers if type === "offer"
+        if (couponD.type === "offer" && couponD.offerName?.restaurantId?._id) {
+          const restaurantId = couponD.offerName.restaurantId._id;
+          setSelectedRestaurant(restaurantId);
+          setSelectedOffer(couponD.offerName._id);
+
+          const restResponse = await GetRestaurantById(
             RESTAURANT_URLS.GET_SINGLE_RESTAURANT(restaurantId)
           );
 
@@ -103,24 +109,26 @@ const [selectedRestaurant, setSelectedRestaurant] = useState<string>("");
             setOffers(restData.offers || []);
           }
         }
-          toast.success(
-            response.data.message || "Coupon details fetched successfully"
-          );
-        } else {
-          toast.error(response.data.message || "Failed to fetch details.");
-        }
-      } catch (error) {
-        console.error("Error fetching Coupon Details:", error);
-        setError("Failed to fetch Coupon data.");
-        toast.error("Failed to fetch coupon data.");
-      } finally {
-        setLoading(false);
-        stopLoading();
-      }
-    };
 
-    fetchCouponData();
-  }, [id]);
+        toast.success(
+          response.data.message || "Coupon details fetched successfully"
+        );
+      } else {
+        toast.error(response.data.message || "Failed to fetch details.");
+      }
+    } catch (error) {
+      console.error("Error fetching Coupon Details:", error);
+      setError("Failed to fetch Coupon data.");
+      toast.error("Failed to fetch coupon data.");
+    } finally {
+      setLoading(false);
+      stopLoading();
+    }
+  };
+
+  fetchCouponData();
+}, [id]);
+
 
   const handleSaveEditCoupon = async () => {
     if (!id) return;
