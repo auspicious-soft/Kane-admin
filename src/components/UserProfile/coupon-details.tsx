@@ -101,8 +101,8 @@ export default function CouponDetails({
               <TableHead>S.No</TableHead>
               <TableHead className="text-center">Worth Points</TableHead>
               <TableHead className="text-center">Coupon Name</TableHead>
-              <TableHead className="text-center">Details</TableHead>
-              <TableHead className="text-right">Status</TableHead>
+              <TableHead className="text-center">Type</TableHead>
+              {/* <TableHead className="text-right">Status</TableHead> */}
               <TableHead className="text-center">Action</TableHead>
             </TableRow>
           </TableHeader>
@@ -138,7 +138,7 @@ export default function CouponDetails({
                   <TableCell>
                     <span>{(currentPage - 1) * HISTORY_PER_PAGE + i + 1}</span>
                   </TableCell>
-                  <TableCell className="text-center">{coupon.points}</TableCell>
+                  <TableCell className="text-center">{coupon.points || "N/A"}</TableCell>
                   <TableCell className="text-center">{coupon.couponName}</TableCell>
                   <TableCell className="text-center">
                     {coupon.type === "percentage"
@@ -147,9 +147,9 @@ export default function CouponDetails({
                       ? coupon.offerName
                       : "N/A"}
                   </TableCell>
-                  <TableCell className="text-right">
+                  {/* <TableCell className="text-right">
                     {coupon.mainType}
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell className="text-center">
                     <button
                       className="bg-[#e4bc84] cursor-pointer rounded px-4 py-2 text-sm text-[#0a0e11]"

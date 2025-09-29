@@ -48,6 +48,7 @@ type User = {
   stamps: string;
   date: string;
   reasonForBlock: string;
+  activePoints: number;
 };
 
 export default function UserProfile() {
@@ -84,12 +85,12 @@ export default function UserProfile() {
       );
 
       if (!response.data.success) {
-       setErrors("User not found");
-      setUser(null);
-      setOffers([]);
-      setCoupons([]);
-      toast.error("Invalid user, No user found!");
-      return;
+        setErrors("User not found");
+        setUser(null);
+        setOffers([]);
+        setCoupons([]);
+        toast.error("Invalid user, No user found!");
+        return;
       }
 
       const u = response.data.data.user;
@@ -129,7 +130,7 @@ export default function UserProfile() {
           identifier: item.identifier,
           date: new Date(item.createdAt).toLocaleDateString(),
           mainType: item.type,
-          couponName:item.couponId.couponName,
+          couponName: item.couponId.couponName,
         }))
       );
 
@@ -149,14 +150,15 @@ export default function UserProfile() {
         date: new Date(u.createdAt).toLocaleDateString(),
         reasonForBlock: u.reasonForBlock || null,
         stamps: u.stamps || "0",
+        activePoints: u.activePoints || 0,
       });
     } catch (err) {
-     console.error(err);
-    setErrors("Failed to fetch user");
-    setOffers([]);
-    setCoupons([]);
-    setUser(null);
-    toast.error("Failed to fetch user. Try again!");
+      console.error(err);
+      setErrors("Failed to fetch user");
+      setOffers([]);
+      setCoupons([]);
+      setUser(null);
+      toast.error("Failed to fetch user. Try again!");
     } finally {
       setLoading(false);
       stopLoading();
@@ -167,11 +169,9 @@ export default function UserProfile() {
     if (scannedId) fetchUserById(scannedId);
   }, [scannedId]);
 
-
-
   const handleOpenModal = (offer: any) => {
     setSelectedOffer(offer);
-    console.log(offer,"offer")
+    console.log(offer, "offer");
     setIsModalOpen(true);
   };
 
@@ -184,15 +184,15 @@ export default function UserProfile() {
 
   const handleOpenModalCoupon = (coupon: any) => {
     setSelectedCoupon(coupon);
-        console.log(coupon,"coupon")
+    console.log(coupon, "coupon");
 
-    if (coupon?.couponId?.type === "points") {
-    setModalPoints(coupon.couponId.points);
-  } else {
-    setModalPoints("");
-  }
-  setIsModalOpenCoupon(true);
-};
+    if (coupon?.type === "points") {
+      setModalPoints(coupon.points);
+    } else {
+      setModalPoints("");
+    }
+    setIsModalOpenCoupon(true);
+  };
 
   // Handler to close modal
   const handleCloseModalCoupon = () => {
@@ -235,6 +235,8 @@ export default function UserProfile() {
 
   const handleOfferUpdate = async () => {
     if (!selectedOffer || !user || modalPoints === "") return;
+    const idToSend = scannedId || manualId;
+
     setLoading(true);
     try {
       const response = await ApplyUserOffer(`${USER_URLS.APPLY_USER_OFFER}`, {
@@ -244,20 +246,22 @@ export default function UserProfile() {
       });
       if (response.status === 200) {
         toast.success("Offer Applied Successfully.");
+        await fetchUserById(idToSend);
       } else {
         toast.success("Offer Failed to apply..");
       }
     } catch (err) {
       console.error("Failed to apply offer:", err);
-    }
-    finally{
-      setLoading(false)
+    } finally {
+      setLoading(false);
     }
     handleCloseModal();
   };
 
   const handleCouponUpdate = async () => {
     if (!selectedCoupon || !user || modalPoints === "") return;
+    const idToSend = scannedId || manualId;
+
     setLoading(true);
     try {
       const response = await ApplyUserCoupon(`${USER_URLS.APPLY_USER_COUPON}`, {
@@ -267,14 +271,14 @@ export default function UserProfile() {
       });
       if (response.status === 200) {
         toast.success("Offer Applied Successfully.");
+        await fetchUserById(idToSend);
       } else {
         toast.success("Offer Failed to apply..");
       }
     } catch (err) {
       console.error("Failed to apply offer:", err);
-    }
-       finally{
-      setLoading(false)
+    } finally {
+      setLoading(false);
     }
     handleCloseModal();
   };
@@ -318,12 +322,12 @@ export default function UserProfile() {
                   type="text"
                   placeholder="Enter User ID"
                   value={manualId}
-                   onChange={(e) => setManualId(e.target.value)}
-  onKeyDown={(e) => {
-    if (e.key === "Enter") {
-      fetchUserById(manualId.trim()); // 👈 Call API when Enter is pressed
-    }
-  }}
+                  onChange={(e) => setManualId(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      fetchUserById(manualId.trim()); // 👈 Call API when Enter is pressed
+                    }
+                  }}
                   className="w-full h-12 bg-zinc-950 rounded border border-zinc-800 px-3 text-white focus:outline-none focus:ring-1 focus:ring-orange-300"
                 />
               </div>
@@ -437,10 +441,9 @@ export default function UserProfile() {
                 </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleOfferUpdate}
-
                   className="w-full py-3 px-7 h-auto border-0 cursor-pointer rounded-lg !bg-[#298400] !text-white text-sm"
                 >
-                  Update
+                  Apply
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -484,22 +487,24 @@ export default function UserProfile() {
                 </AlertDialogDescription>
 
                 <div className="my-4 flex flex-col gap-2">
-                <input
-          id="coupon-points"
-          type="number"
-          min={0}
-          value={modalPoints}
-          onChange={(e) =>
-            setModalPoints(
-              selectedCoupon?.couponId?.type === "points"
-                ? selectedCoupon.couponId.points
-                : e.target.value === "" ? "" : Number(e.target.value)
-            )
-          }
-          className="w-full h-10 bg-zinc-900 rounded border border-zinc-700 px-3 text-white focus:outline-none"
-          placeholder="Enter Worth points"
-          disabled={selectedCoupon?.couponId?.type === "points"}
-        />
+                  <input
+                    id="coupon-points"
+                    type="number"
+                    min={0}
+                    value={modalPoints}
+                    onChange={(e) =>
+                      setModalPoints(
+                        selectedCoupon?.couponId?.type === "points"
+                          ? selectedCoupon.couponId.points
+                          : e.target.value === ""
+                          ? ""
+                          : Number(e.target.value)
+                      )
+                    }
+                    className="w-full h-10 bg-zinc-900 rounded border border-zinc-700 px-3 text-white focus:outline-none"
+                    placeholder="Enter Worth points"
+                    disabled={selectedCoupon?.couponId?.type === "points"}
+                  />
                 </div>
               </AlertDialogHeader>
               <AlertDialogFooter className="!justify-center items-center mt-5">
@@ -510,11 +515,10 @@ export default function UserProfile() {
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction
-                   onClick={handleCouponUpdate}
-
+                  onClick={handleCouponUpdate}
                   className="w-full py-3 px-7 h-auto border-0 cursor-pointer rounded-lg !bg-[#298400] !text-white text-sm"
                 >
-                  Update
+                  Apply
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
