@@ -56,7 +56,7 @@ const TextEditor = ({ value = "", setDescription }: TextEditorProps) => {
             margin: 0;
             padding: 16px;
           }
-          table {
+          table { 
             border-collapse: collapse;
             width: 100%;
           }
