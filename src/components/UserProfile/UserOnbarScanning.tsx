@@ -139,18 +139,18 @@ export default function UserOnBarScanning({
             <span className="text-white text-sm font-normal">Email</span>
             {user.email}
           </p>
-          <p className="flex flex-col gap-3 text-xs">
+          {/* <p className="flex flex-col gap-3 text-xs">
             <span className="text-white text-sm font-normal">Phone Number</span>
             {user.phoneNumber}
-          </p>
+          </p> */}
           <p className="flex flex-col gap-3 text-xs">
             <span className="text-white text-sm font-normal">Loyalty ID</span>
             {user.loyaltyid}
           </p>
-          <p className="flex flex-col gap-3 text-xs">
+          {/* <p className="flex flex-col gap-3 text-xs">
             <span className="text-white text-sm font-normal">Gender</span>
             {user.gender}
-          </p>
+          </p> */}
 
           <p className="flex flex-col gap-3 text-xs">
             <span className="text-white text-sm font-normal">
