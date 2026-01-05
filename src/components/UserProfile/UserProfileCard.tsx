@@ -36,6 +36,7 @@ interface UserType {
   blockReason?: string;
   reasonForBlock:string;
   profilePic:string;
+  totalStampsCollected:number
 }
 
 interface UserProfileCardProps {
@@ -164,7 +165,7 @@ export default function UserProfileCard({
             <span className="text-white text-sm font-normal">
               Total Stamps Collected
             </span>
-            {user.stamps}
+            {user.totalStampsCollected}
           </p>
           <p className="flex flex-col gap-3 text-xs">
             <span className="text-white text-sm font-normal">
