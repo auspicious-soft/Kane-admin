@@ -51,6 +51,8 @@ type OffHistory = {
   restaurantName: string;
   offerName: string;
   type: "earn" | "redeem";
+  earnedAt:string;
+  redeemedAt:string;
   date: string;
   identifier: string;
 };
@@ -167,6 +169,8 @@ export default function UserProfile() {
               type: item.type as "earn" | "redeem",
               date: new Date(item.createdAt).toLocaleDateString(),
               identifier: item.identifier,
+              earnedAt:item.earnedAt ?  new Date(item.earnedAt).toLocaleDateString() : "-",
+ redeemedAt: item.redeemedAt ?  new Date(item.redeemedAt).toLocaleDateString() : "-"
             })
           );
           setOfferHistory(mappedOfferHistory);

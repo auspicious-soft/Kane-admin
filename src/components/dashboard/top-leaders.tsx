@@ -95,7 +95,7 @@ export default function TopLeaders({
               <TableHead>ID</TableHead>
               <TableHead>User Name</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
+              {/* <TableHead>Phone</TableHead> */}
               <TableHead>Total Points</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Registered Date</TableHead>
@@ -132,7 +132,7 @@ export default function TopLeaders({
                     </div>
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.phone}</TableCell>
+                  {/* <TableCell>{user.phone}</TableCell> */}
                   <TableCell>{user.points}</TableCell>
                   <TableCell>{user.status}</TableCell>
                   <TableCell>{user.date}</TableCell>
@@ -141,7 +141,7 @@ export default function TopLeaders({
                       type="button"
                       variant="link"
                       onClick={() => router.push(`/dashboard/${user._id}`)}
-                      className="text-[#c5c5c5] text-xs p-0 h-auto"
+                      className="text-[#e4bc84] text-xs p-0 h-auto"
                     >
                       View
                     </Button>

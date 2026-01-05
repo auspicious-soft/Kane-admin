@@ -10,7 +10,7 @@ import {
   getAllRestaurants,
   GetRestaurantById,
 } from "@/services/admin-services";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { ArrowLeft } from "lucide-react";
@@ -58,6 +58,7 @@ const Page = () => {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [restaurantOffersData, setRestaurantOffersData] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
+const expiryRef = useRef<HTMLInputElement | null>(null);
 
   const handleInputChange = (field: string, value: string) => {
     setCouponData((prev) => ({
@@ -231,11 +232,11 @@ const handleCreateCoupon = async () => {
                   id="type"
                   value={couponData.type}
                   onChange={(e) => handleInputChange("type", e.target.value)}
-                  className="bg-[#0a0e11] border border-[#2e2e2e] rounded px-4 py-2 text-white"
+                  className="bg-[#0a0e11] border border-[#2e2e2e] rounded px-4 py-2 text-white text-sm"
                 >
-                  <option value="offer">Offer</option>
-                  <option value="points">Points</option>
-                  <option value="percentage">Percentage</option>
+                  <option className="text-sm" value="offer">Offer</option>
+                  <option className="text-sm" value="points">Points</option>
+                  <option className="text-sm" value="percentage">Percentage</option>
                 </select>
                 {errors.type && (
                   <p className="text-red-500 text-xs mt-1">{errors.type}</p>
@@ -250,7 +251,7 @@ const handleCreateCoupon = async () => {
                   onChange={(e) =>
                     handleInputChange("couponName", e.target.value)
                   }
-                  placeholder="Enter Name of Coupon"
+                  placeholder="Enter Name of Coupon "
                 />
                 {errors.couponName && (
                   <p className="text-red-500 text-xs mt-1">
@@ -269,11 +270,11 @@ const handleCreateCoupon = async () => {
                 onChange={(e) =>
                   handleInputChange("restaurantId", e.target.value)
                 }
-                className="bg-[#0a0e11] border border-[#2e2e2e] rounded px-4 py-2 text-white"
+                className="bg-[#0a0e11] border border-[#2e2e2e] rounded px-4 py-2 text-white text-sm"
               >
-                <option value="">Select Restaurant</option>
+                <option  className="text-sm" value="">Select Restaurant</option>
                 {restaurants.map((rest) => (
-                  <option key={rest._id} value={rest._id}>
+                  <option key={rest._id}  className="text-sm" value={rest._id}>
                     {rest.restaurantName}
                   </option>
                 ))}
@@ -293,11 +294,11 @@ const handleCreateCoupon = async () => {
                   id="offer"
                   value={couponData.offerName}
                   onChange={(e) => handleInputChange("offerName", e.target.value)}
-                  className="bg-[#0a0e11] border border-[#2e2e2e] rounded px-4 py-2 text-white"
+                  className="bg-[#0a0e11] border border-[#2e2e2e] rounded px-4 py-2 text-white text-sm"
                 >
-                  <option value="">Select Offer</option>
+                  <option  className="text-sm" value="">Select Offer</option>
                   {restaurantOffersData.map((offer) => (
-                    <option key={offer._id} value={offer._id}>
+                    <option key={offer._id}  className="text-sm" value={offer._id}>
                       {offer.offerName}
                     </option>
                   ))}
@@ -356,12 +357,15 @@ const handleCreateCoupon = async () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-9">
               <div className="flex flex-col gap-2.5">
                 <Label htmlFor="expiry">Expiry Date</Label>
-                <Input
-                  id="expiry"
-                  type="date"
-                  value={couponData.expiry?.slice(0, 10) ?? ""}
-                  onChange={(e) => handleInputChange("expiry", e.target.value)}
-                />
+              <Input
+  ref={expiryRef}
+  id="expiry"
+  type="date"
+  value={couponData.expiry?.slice(0, 10) ?? ""}
+  onChange={(e) => handleInputChange("expiry", e.target.value)}
+  onClick={() => expiryRef.current?.showPicker()}
+  onFocus={() => expiryRef.current?.showPicker()}
+/>
                 {errors.expiry && (
                   <p className="text-red-500 text-xs mt-1">{errors.expiry}</p>
                 )}

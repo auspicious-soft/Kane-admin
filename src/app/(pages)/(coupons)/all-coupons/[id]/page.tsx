@@ -110,9 +110,9 @@ const [selectedRestaurant, setSelectedRestaurant] = useState<string>("");
           }
         }
 
-        toast.success(
-          response.data.message || "Coupon details fetched successfully"
-        );
+        // toast.success(
+        //   response.data.message || "Coupon details fetched successfully"
+        // );
       } else {
         toast.error(response.data.message || "Failed to fetch details.");
       }

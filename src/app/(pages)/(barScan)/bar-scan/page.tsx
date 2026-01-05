@@ -67,7 +67,7 @@ export default function UserProfile() {
   const scannerRef = useRef<HTMLDivElement>(null);
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [selectedCoupon, setSelectedCoupon] = useState(null);
-  const [modalPoints, setModalPoints] = useState<number | "">("");
+  const [modalPoints, setModalPoints] = useState<string | "">("");
   const [userId, setUserId] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -145,7 +145,7 @@ export default function UserProfile() {
         gender: u.gender,
         points: u.totalPoints,
         status: u.isBlocked ? "Blocked" : "Active",
-        profilePic: "", // handle image if needed
+        profilePic: u.profilePicture ? `https://olivers-bucket-1.s3.eu-north-1.amazonaws.com/${u.profilePicture}` : "", 
         loyaltyid: u.identifier,
         date: new Date(u.createdAt).toLocaleDateString(),
         reasonForBlock: u.reasonForBlock || null,
@@ -236,7 +236,15 @@ export default function UserProfile() {
   const handleOfferUpdate = async () => {
     if (!selectedOffer || !user || modalPoints === "") return;
     const idToSend = scannedId || manualId;
-
+    if (
+      modalPoints === "" ||
+      modalPoints === null ||
+      (typeof modalPoints === "number" && modalPoints <= 0)
+    ) {
+      toast.error("Please enter valid points before applying the offer.");
+      console.log("123");
+      return;
+    }
     setLoading(true);
     try {
       const response = await ApplyUserOffer(`${USER_URLS.APPLY_USER_OFFER}`, {
@@ -261,7 +269,17 @@ export default function UserProfile() {
   const handleCouponUpdate = async () => {
     if (!selectedCoupon || !user || modalPoints === "") return;
     const idToSend = scannedId || manualId;
+    if (
+      selectedCoupon.type !== "points" &&
+      (modalPoints === "" ||
+        modalPoints === null ||
+        (typeof modalPoints === "number" && modalPoints <= 0))
+    ) {
+      toast.error("Please enter valid points before applying the coupon.");
+      console.log("12345544");
 
+      return;
+    }
     setLoading(true);
     try {
       const response = await ApplyUserCoupon(`${USER_URLS.APPLY_USER_COUPON}`, {
@@ -335,7 +353,13 @@ export default function UserProfile() {
               <Button
                 type="button"
                 className="w-full sm:w-auto px-7 py-2.5 bg-orange-300 text-zinc-950 text-sm font-normal font-['MADE_Tommy_Soft'] rounded hover:bg-orange-400"
-                onClick={() => fetchUserById(manualId)}
+                onClick={() => {
+                  if (!manualId.trim()) {
+                    toast.error("User ID is required to search");
+                    return;
+                  }
+                  fetchUserById(manualId.trim());
+                }}
               >
                 Search
               </Button>
@@ -423,9 +447,7 @@ export default function UserProfile() {
                   min={0}
                   value={modalPoints}
                   onChange={(e) =>
-                    setModalPoints(
-                      e.target.value === "" ? "" : Number(e.target.value)
-                    )
+                    setModalPoints(e.target.value === "" ? "" : e.target.value)
                   }
                   className="w-full h-10 bg-zinc-900 rounded border border-zinc-700 px-3 text-white focus:outline-none"
                   placeholder="Enter Worth points"
@@ -440,7 +462,10 @@ export default function UserProfile() {
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={handleOfferUpdate}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleOfferUpdate();
+                  }}
                   className="w-full py-3 px-7 h-auto border-0 cursor-pointer rounded-lg !bg-[#298400] !text-white text-sm"
                 >
                   Apply
@@ -515,7 +540,10 @@ export default function UserProfile() {
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={handleCouponUpdate}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleCouponUpdate();
+                  }}
                   className="w-full py-3 px-7 h-auto border-0 cursor-pointer rounded-lg !bg-[#298400] !text-white text-sm"
                 >
                   Apply

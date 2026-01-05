@@ -119,17 +119,16 @@ export default function UserProfileCard({
       <div className="w-full md:w-1/4">
         <div className="bg-[#182226] rounded border border-[#2e2e2e] px-5 text-center py-7.5">
           <Avatar className="size-20 md:size-40 m-auto">
-            <AvatarImage src={user.profilePic? user.profilePic : dummyImg.src} />
+            <AvatarImage src={user.profilePic? user.profilePic : dummyImg.src} className="object-fit" />
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
           <h3 className="text-lg font-medium mt-4 mb-1">{user.fullName}</h3>
           <p className="text-sm font-normal">Current Status: {user.status}</p>
           <div className="flex flex-col gap-1.5 mt-7">
             <div className="text-white text-sm font-normal custom-madeTommy">
-              Milestones
             </div>
-            <div className="text-[#c5c5c5] text-xs font-normal">
-              8/next milestone free burger
+            <div className="text-[#c5c5c5] text-xs pb-2 font-normal">
+             
             </div>
           </div>
         </div>
@@ -145,18 +144,18 @@ export default function UserProfileCard({
             <span className="text-white text-sm font-normal">Email</span>
             {user.email}
           </p>
-          <p className="flex flex-col gap-3 text-xs">
+          {/* <p className="flex flex-col gap-3 text-xs">
             <span className="text-white text-sm font-normal">Phone Number</span>
             {user.phoneNumber}
-          </p>
+          </p> */}
           <p className="flex flex-col gap-3 text-xs">
             <span className="text-white text-sm font-normal">Loyalty ID</span>
             {user.loyaltyid}
           </p>
-          <p className="flex flex-col gap-3 text-xs">
+          {/* <p className="flex flex-col gap-3 text-xs">
             <span className="text-white text-sm font-normal">Gender</span>
             {user.gender}
-          </p>
+          </p> */}
           <p className="flex flex-col gap-3 text-xs">
             <span className="text-white text-sm font-normal">Total Points</span>
             {user.points}

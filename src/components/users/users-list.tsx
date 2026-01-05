@@ -259,7 +259,7 @@ export default function UsersList() {
                   <ChevronsUpDown className="h-4 w-4" />
                 </div>
               </TableHead>
-              <TableHead>
+              {/* <TableHead>
                 <div
                   onClick={() => handleSort("phoneNumber")}
                   className="flex items-center gap-1 cursor-pointer"
@@ -267,7 +267,7 @@ export default function UsersList() {
                   Phone
                   <ChevronsUpDown className="h-4 w-4" />
                 </div>
-              </TableHead>
+              </TableHead> */}
               <TableHead>
                 <div
                   onClick={() => handleSort("points")}
@@ -338,9 +338,9 @@ export default function UsersList() {
                     </div>
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
-                  <TableCell>{`${
+                  {/* <TableCell>{`${
                     user.countryCode + "-" + user.phoneNumber
-                  }`}</TableCell>
+                  }`}</TableCell> */}
                   <TableCell>{user.points}</TableCell>
                   <TableCell>{user.status}</TableCell>
                   <TableCell>{user.date}</TableCell>

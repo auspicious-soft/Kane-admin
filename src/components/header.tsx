@@ -21,6 +21,8 @@ export function AppHeader() {
     pageName = 'User Detail';
   } else if (pathname.startsWith('/blocked-users/') && pathSegments.length === 2) {
     pageName = 'User Detail';
+  }else if (pathname.startsWith('/all-coupons/') && pathSegments.length === 2) {
+    pageName = 'Coupon Detail';
   } else if (pathname.startsWith('/restaurants/') && pathSegments.length === 2) {
     pageName = 'Restaurants Detail';
   } else {

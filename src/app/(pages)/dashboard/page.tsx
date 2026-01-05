@@ -59,6 +59,10 @@ const Page = () => {
     topLeaders = [],
     total = 0,
     page = 1,
+    usersPercentageChange,
+    restaurantsPercentageChange,
+    offersPercentageChange,
+    pointsRedeemedPercentageChange
   } = dashboardData;
 
   const formattedLeaders = topLeaders.map((user: any, i: number) => ({
@@ -81,7 +85,7 @@ const Page = () => {
           <h3 className="text-white text-2xl font-medium">{totalUsers}</h3>
           <div className="text-[#c5c5c5] text-base font-medium">Total Users</div>
           <div className="flex justify-between items-center mt-2.5">
-            <p className="text-[#c5c5c5] text-xs">+8% from last month</p>
+            <p className="text-[#c5c5c5] text-xs">{`${usersPercentageChange && usersPercentageChange>=0 ? "+" : "-" }`}{usersPercentageChange}% from last month</p>
             <div className="flex items-center justify-center w-14 h-14 bg-[#0a0e11] rounded-full border border-[#2e2e2e]">
               <TotalUserIcon />
             </div>
@@ -93,7 +97,7 @@ const Page = () => {
           <h3 className="text-white text-2xl font-medium">{totalRestaurants}</h3>
           <div className="text-[#c5c5c5] text-base font-medium">Total Restaurants</div>
           <div className="flex justify-between items-center mt-2.5">
-            <p className="text-[#c5c5c5] text-xs">+8% from last month</p>
+            <p className="text-[#c5c5c5] text-xs">{`${restaurantsPercentageChange && restaurantsPercentageChange>=0 ? "+" : "" }`}{restaurantsPercentageChange}% from last month</p>
             <div className="flex items-center justify-center w-14 h-14 bg-[#0a0e11] rounded-full border border-[#2e2e2e]">
               <TotalResturantsIcon />
             </div>
@@ -104,7 +108,7 @@ const Page = () => {
           <h3 className="text-white text-2xl font-medium">{totalPointsRedeemed}</h3>
           <div className="text-[#c5c5c5] text-base font-medium">Points Redeemed</div>
           <div className="flex justify-between items-center mt-2.5">
-            <p className="text-[#c5c5c5] text-xs">+8% from last month</p>
+           <p className="text-[#c5c5c5] text-xs">{`${pointsRedeemedPercentageChange && pointsRedeemedPercentageChange>=0 ? "+" : "" }`}{pointsRedeemedPercentageChange}% from last month</p>
             <div className="flex items-center justify-center w-14 h-14 bg-[#0a0e11] rounded-full border border-[#2e2e2e]">
               <PointsRedeemedIcon />
             </div>
@@ -115,7 +119,7 @@ const Page = () => {
           <h3 className="text-white text-2xl font-medium">{totalRestaurantsOffers}</h3>
           <div className="text-[#c5c5c5] text-base font-medium">Active Offers</div>
           <div className="flex justify-between items-center mt-2.5">
-            <p className="text-[#c5c5c5] text-xs">+8% from last month</p>
+          <p className="text-[#c5c5c5] text-xs">{`${offersPercentageChange && offersPercentageChange>=0 ? "+" : "" }`}{offersPercentageChange}% from last month</p>
             <div className="flex items-center justify-center w-14 h-14 bg-[#0a0e11] rounded-full border border-[#2e2e2e]">
               <ActiveOffersIcon />
             </div>

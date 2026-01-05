@@ -24,6 +24,8 @@ type OffHistory = {
   restaurantName: string;
   offerName: string;
   type: "earn" | "redeem";
+    earnedAt:string;
+  redeemedAt:string;
   date: string;
   identifier: string;
 };
@@ -95,7 +97,9 @@ export default function OffersDetails({
               <TableHead className="tex">S.No</TableHead>
               <TableHead className="text-center">Offer Name</TableHead>
               <TableHead className="text-center">Restaurant Name</TableHead>
-              <TableHead className="text-right">Status</TableHead>
+              <TableHead className="text-right">Earned At</TableHead>
+              <TableHead className="text-right">Reedemed At</TableHead>
+
             </TableRow>
           </TableHeader>
           {loading ? (
@@ -137,12 +141,11 @@ export default function OffersDetails({
                     {history.restaurantName}
                   </TableCell>
 
-                  <TableCell className="text-right">
-                    {history.type === "redeem"
-                      ? "Used"
-                      : history.type === "earn"
-                      ? "Not Used"
-                      : ""}
+                  <TableCell className="text-center">
+                    {history.earnedAt}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {history.redeemedAt}
                   </TableCell>
                 </TableRow>
               ))}
