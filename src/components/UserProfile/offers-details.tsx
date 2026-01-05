@@ -100,7 +100,7 @@ export default function OffersDetails({
               <TableHead className="text-right">Earned At</TableHead>
               <TableHead className="text-right">Reedemed At</TableHead>
 
-            </TableRow>
+            </TableRow> 
           </TableHeader>
           {loading ? (
             <TableBody>
