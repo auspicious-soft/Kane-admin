@@ -60,6 +60,14 @@ const Page = () => {
   const [loading, setLoading] = useState(true);
 const expiryRef = useRef<HTMLInputElement | null>(null);
 
+const getTodayDate = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
   const handleInputChange = (field: string, value: string) => {
     setCouponData((prev) => ({
       ...prev,
@@ -232,11 +240,11 @@ const handleCreateCoupon = async () => {
                   id="type"
                   value={couponData.type}
                   onChange={(e) => handleInputChange("type", e.target.value)}
-                  className="bg-[#0a0e11] border border-[#2e2e2e] rounded px-4 py-2 text-white text-sm"
+                  className="bg-[#0a0e11] border border-[#2e2e2e] rounded px-4 py-2 text-white text-xs"
                 >
-                  <option className="text-sm" value="offer">Offer</option>
-                  <option className="text-sm" value="points">Points</option>
-                  <option className="text-sm" value="percentage">Percentage</option>
+                  <option className="text-xs" value="offer">Offer</option>
+                  <option className="text-xs" value="points">Points</option>
+                  <option className="text-xs" value="percentage">Percentage</option>
                 </select>
                 {errors.type && (
                   <p className="text-red-500 text-xs mt-1">{errors.type}</p>
@@ -270,11 +278,11 @@ const handleCreateCoupon = async () => {
                 onChange={(e) =>
                   handleInputChange("restaurantId", e.target.value)
                 }
-                className="bg-[#0a0e11] border border-[#2e2e2e] rounded px-4 py-2 text-white text-sm"
+                className="bg-[#0a0e11] border border-[#2e2e2e] rounded px-4 py-2 text-white text-xs"
               >
-                <option  className="text-sm" value="">Select Restaurant</option>
+                <option  className="text-xs" value="">Select Restaurant</option>
                 {restaurants.map((rest) => (
-                  <option key={rest._id}  className="text-sm" value={rest._id}>
+                  <option key={rest._id}  className="text-xs" value={rest._id}>
                     {rest.restaurantName}
                   </option>
                 ))}
@@ -294,11 +302,11 @@ const handleCreateCoupon = async () => {
                   id="offer"
                   value={couponData.offerName}
                   onChange={(e) => handleInputChange("offerName", e.target.value)}
-                  className="bg-[#0a0e11] border border-[#2e2e2e] rounded px-4 py-2 text-white text-sm"
+                  className="bg-[#0a0e11] border border-[#2e2e2e] rounded px-4 py-2 text-white text-xs"
                 >
-                  <option  className="text-sm" value="">Select Offer</option>
+                  <option  className="text-xs" value="">Select Offer</option>
                   {restaurantOffersData.map((offer) => (
-                    <option key={offer._id}  className="text-sm" value={offer._id}>
+                    <option key={offer._id}  className="text-xs" value={offer._id}>
                       {offer.offerName}
                     </option>
                   ))}
@@ -355,17 +363,18 @@ const handleCreateCoupon = async () => {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-9">
-              <div className="flex flex-col gap-2.5">
-                <Label htmlFor="expiry">Expiry Date</Label>
-              <Input
-  ref={expiryRef}
-  id="expiry"
-  type="date"
-  value={couponData.expiry?.slice(0, 10) ?? ""}
-  onChange={(e) => handleInputChange("expiry", e.target.value)}
-  onClick={() => expiryRef.current?.showPicker()}
-  onFocus={() => expiryRef.current?.showPicker()}
-/>
+             <div className="flex flex-col gap-2.5">
+  <Label htmlFor="expiry">Expiry Date</Label>
+  <Input
+    ref={expiryRef}
+    id="expiry"
+    type="date"
+    value={couponData.expiry?.slice(0, 10) ?? ""}
+    min={getTodayDate()}
+    onChange={(e) => handleInputChange("expiry", e.target.value)}
+    onClick={() => expiryRef.current?.showPicker()}
+    onFocus={() => expiryRef.current?.showPicker()}
+  />
                 {errors.expiry && (
                   <p className="text-red-500 text-xs mt-1">{errors.expiry}</p>
                 )}

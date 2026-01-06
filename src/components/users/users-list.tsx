@@ -121,7 +121,7 @@ export default function UsersList() {
               profilePic: imageUrl,
               loyaltyid: user.loyaltyid || "N/A",
               gender: user.gender || "Unknown",
-              points: user.points || 0,
+              points: user.totalPoints || 0,
               status: user.isBlocked ? "Blocked" : "Active",
               stamps: user.stamps?.toString() || "0",
               date: formattedDate,

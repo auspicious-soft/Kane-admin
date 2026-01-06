@@ -97,8 +97,8 @@ export default function OffersDetails({
               <TableHead className="tex">S.No</TableHead>
               <TableHead className="text-center">Offer Name</TableHead>
               <TableHead className="text-center">Restaurant Name</TableHead>
-              <TableHead className="text-right">Earned At</TableHead>
-              <TableHead className="text-right">Reedemed At</TableHead>
+              <TableHead>Earned At</TableHead>
+              <TableHead >Reedemed At</TableHead>
 
             </TableRow> 
           </TableHeader>
@@ -106,7 +106,7 @@ export default function OffersDetails({
             <TableBody>
               <TableRow>
                 <TableCell
-                  colSpan={3} // Updated colSpan to match the number of columns
+                  colSpan={5} // Updated colSpan to match the number of columns
                   className="p-5 text-center text-sm text-gray-400"
                 >
                   Loading...
@@ -117,7 +117,7 @@ export default function OffersDetails({
             <TableBody>
               <TableRow>
                 <TableCell
-                  colSpan={3} // Updated colSpan to match the number of columns
+                  colSpan={5} // Updated colSpan to match the number of columns
                   className="p-5 text-center text-sm text-gray-400"
                 >
                   No Data found.

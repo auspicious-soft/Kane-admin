@@ -171,7 +171,7 @@ export default function UserProfileCard({
             <span className="text-white text-sm font-normal">
               Register Date
             </span>
-            {user.date}
+            {user.date} 
           </p>
           {user.status === "Blocked" && user.reasonForBlock && (
             <p className="flex flex-col gap-3 text-xs">

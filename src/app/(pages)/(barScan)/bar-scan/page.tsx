@@ -262,6 +262,7 @@ export default function UserProfile() {
       console.error("Failed to apply offer:", err);
     } finally {
       setLoading(false);
+      handleCloseModal();
     }
     handleCloseModal();
   };
@@ -298,7 +299,7 @@ export default function UserProfile() {
     } finally {
       setLoading(false);
     }
-    handleCloseModal();
+    handleCloseModalCoupon();
   };
 
   return (
