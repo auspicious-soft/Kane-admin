@@ -30,6 +30,7 @@ type User = {
   stamps: string;
   date: string;
   reasonForBlock: string;
+  totalStampsCollected:number;
 };
 
 type RedemptHistory = {
@@ -98,6 +99,7 @@ export default function UserProfile() {
           points: userDetails.totalPoints,
           status: userDetails.isBlocked ? "Blocked" : "Active",
           stamps: userDetails.stamps || "0",
+          totalStampsCollected:userDetails.totalStampsCollected || 0,
           date: userDetails.createdAt
             ? new Date(userDetails.createdAt).toLocaleDateString()
             : "",
