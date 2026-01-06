@@ -97,8 +97,8 @@ export default function OffersDetails({
               <TableHead className="tex">S.No</TableHead>
               <TableHead className="text-center">Offer Name</TableHead>
               <TableHead className="text-center">Restaurant Name</TableHead>
-              <TableHead>Earned At</TableHead>
-              <TableHead >Reedemed At</TableHead>
+              <TableHead className="text-center">Earned At</TableHead>
+              <TableHead className="text-center">Reedemed At</TableHead>
 
             </TableRow> 
           </TableHeader>

@@ -110,7 +110,7 @@ export default function ScanOffersDetails({
             <TableBody>
               <TableRow>
                 <TableCell
-                  colSpan={3} // Updated colSpan to match the number of columns
+                  colSpan={5} // Updated colSpan to match the number of columns
                   className="p-5 text-center text-sm text-gray-400"
                 >
                   Loading...
@@ -121,7 +121,7 @@ export default function ScanOffersDetails({
             <TableBody>
               <TableRow>
                 <TableCell
-                  colSpan={3} // Updated colSpan to match the number of columns
+                  colSpan={5} // Updated colSpan to match the number of columns
                   className="p-5 text-center text-sm text-gray-400"
                 >
                   No Data found.

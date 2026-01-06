@@ -95,10 +95,10 @@ export default function RedemptionHistory({
         <Table>
           <TableHeader>
             <TableRow className="text-xs">
-              <TableHead>S.No</TableHead>
-              <TableHead>Restaurant Name</TableHead>
-              <TableHead> Reedem Points</TableHead>
-              <TableHead>Register Date</TableHead>
+              <TableHead className="text-center">S.No</TableHead>
+              <TableHead className="text-center">Restaurant Name</TableHead>
+              <TableHead className="text-center"> Reedem Points</TableHead>
+              <TableHead className="text-center">Register Date</TableHead>
             </TableRow>
           </TableHeader>
           {loading ? (
@@ -128,19 +128,19 @@ export default function RedemptionHistory({
               {redemptionHistory.map((history, i) => (
                 <TableRow
                   key={history.id}
-                  className={`${i % 2 === 0 ? "bg-[#0A0E11]" : "bg-[#182226]"}`}
+                  className={`${i % 2 === 0 ? "bg-[#0A0E11]" : "bg-[#182226]"} text-center`}
                 >
                   <TableCell>
                     <span>{(currentPage - 1) * HISTORY_PER_PAGE + i + 1}</span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     <span>{history.restaurantName}</span>
                   </TableCell>
                   {/* <TableCell>{history.freeItem}</TableCell> */}
-                  <TableCell>
+                  <TableCell className="text-center">
                     {history.points}
                   </TableCell>
-                  <TableCell>{history.date}</TableCell>
+                  <TableCell className="text-center">{history.date}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
