@@ -55,6 +55,11 @@ export const deleteRestaurant = async (route:string) =>{
     return axiosInstance.delete(route)
 }
 
+export const deleteOffer = async (route:string) =>{
+    const axiosInstance = await getAxiosInstance();
+    return axiosInstance.delete(route)
+}
+
 
 // -------------------- Users Page ---------------------------
 

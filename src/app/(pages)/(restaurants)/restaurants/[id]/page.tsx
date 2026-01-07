@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useLoading } from "@/context/loading-context";
 import {
+  deleteOffer,
   GetRestaurantById,
   updateRestaurantById,
   updateRestaurantOfferById,
@@ -38,6 +39,8 @@ interface Offer {
   visits: string;
   redeemInStore: string;
   unlockRewards: string;
+  isActive:boolean;
+  isOfferAssigned: boolean;
 }
 
 interface Restaurant {
@@ -59,6 +62,7 @@ const Page = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { startLoading, stopLoading } = useLoading();
+const [isOfferActive, setIsOfferActive] = useState<boolean>(false);
 
   const router = useRouter();
   const [editFormData, setEditFormData] = useState({
@@ -72,10 +76,14 @@ const Page = () => {
     visits: "",
     redeemInStore: "",
     unlockRewards: "",
+    isOfferAssigned: null,
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [offerImagePreview, setOfferImagePreview] = useState<string | null>(null);
-  const [isRestaurantImageLoading, setIsRestaurantImageLoading] = useState(true);
+  const [offerImagePreview, setOfferImagePreview] = useState<string | null>(
+    null
+  );
+  const [isRestaurantImageLoading, setIsRestaurantImageLoading] =
+    useState(true);
   const [isOfferImageLoading, setIsOfferImageLoading] = useState(true);
   const [isImageChanged, setIsImageChanged] = useState(false); // New state to track image changes
 
@@ -149,6 +157,7 @@ const Page = () => {
             visits: "",
             redeemInStore: "",
             unlockRewards: "",
+            isOfferAssigned: null,
           });
           toast.success(
             response.data.message || "Restaurant details fetched successfully"
@@ -177,6 +186,7 @@ const Page = () => {
       setSelectedOffer(offer);
       setIsOfferDialogOpen(true);
       setIsEditMode(false);
+      setIsOfferActive(offer.isActive || false); 
       setEditRestroOfferData({
         offerName: offer.offerName,
         image: offer.image,
@@ -184,6 +194,7 @@ const Page = () => {
         visits: offer.visits,
         redeemInStore: offer.redeemInStore,
         unlockRewards: offer.unlockRewards,
+        isOfferAssigned: offer.isOfferAssigned,
       });
       setOfferImagePreview(offer.image || null);
     }
@@ -195,6 +206,7 @@ const Page = () => {
       restaurantName: restaurantData.restaurantName,
       image: restaurantData.logo, // Use the original logo (URL or empty)
     });
+     setIsOfferActive(selectedOffer?.isActive || false);
     setImagePreview(restaurantData.logo);
     setIsImageChanged(false); // Reset image changed flag
     setEditRestroOfferData({
@@ -204,9 +216,92 @@ const Page = () => {
       visits: selectedOffer?.visits || "",
       redeemInStore: selectedOffer?.redeemInStore || "",
       unlockRewards: selectedOffer?.unlockRewards || "",
+      isOfferAssigned: selectedOffer?.isOfferAssigned || null,
     });
     setOfferImagePreview(selectedOffer?.image || null);
   };
+
+const handleToggleOffer = async () => {
+  if (!id || !selectedOffer?._id) return;
+
+  const newActiveState = !isOfferActive;
+  
+  setLoading(true);
+  startLoading();
+
+  try {
+    const response = await updateRestaurantOfferById(
+      `${RESTAURANT_URLS.UPDATE_RESTAURANT_OFFER(selectedOffer._id)}`,
+      {
+        ...editRestroOfferData,
+        image: editRestroOfferData.image,
+        isActive: newActiveState, 
+      }
+    );
+
+    if (response.status === 200) {
+      toast.success(
+        `Offer ${newActiveState ? "activated" : "deactivated"} successfully.`
+      );
+
+      setIsOfferActive(newActiveState);
+
+      let updatedImageUrl = editRestroOfferData.image;
+      if (
+        editRestroOfferData.image &&
+        !editRestroOfferData.image.startsWith("http")
+      ) {
+        try {
+          const { fileUrl } = await getFileWithMetadata(
+            editRestroOfferData.image
+          );
+          updatedImageUrl = fileUrl;
+        } catch (error) {
+          console.error(
+            `Error fetching updated image for offer ${selectedOffer._id}:`,
+            error
+          );
+          updatedImageUrl = "/images/rest-image.png";
+        }
+      }
+
+      setRestaurantOffersData((prev) =>
+        prev.map((offer) =>
+          offer._id === selectedOffer._id
+            ? {
+                ...offer,
+                ...editRestroOfferData,
+                image: updatedImageUrl,
+                isActive: newActiveState,
+              }
+            : offer
+        )
+      );
+
+      setSelectedOffer((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...editRestroOfferData,
+              image: updatedImageUrl,
+              isActive: newActiveState,
+            }
+          : prev
+      );
+    } else {
+      toast.error(
+        response.data.message || "An error occurred while updating the offer."
+      );
+    }
+  } catch (error) {
+    console.error("Error toggling offer:", error);
+    toast.error("Failed to toggle offer. Please try again later.");
+  } finally {
+    setLoading(false);
+    stopLoading();
+  }
+};
+
 
   const handleSaveEditOffer = async () => {
     if (!id || !selectedOffer?._id) return;
@@ -220,6 +315,7 @@ const Page = () => {
         {
           ...editRestroOfferData,
           image: editRestroOfferData.image,
+            isActive: isOfferActive,
         }
       );
 
@@ -252,6 +348,7 @@ const Page = () => {
                   ...offer,
                   ...editRestroOfferData,
                   image: updatedImageUrl,
+                   isActive: isOfferActive,
                 }
               : offer
           )
@@ -263,6 +360,7 @@ const Page = () => {
                 ...prev,
                 ...editRestroOfferData,
                 image: updatedImageUrl,
+                isActive: isOfferActive,
               }
             : prev
         );
@@ -274,6 +372,7 @@ const Page = () => {
           visits: "",
           redeemInStore: "",
           unlockRewards: "",
+          isOfferAssigned: null,
         });
         setOfferImagePreview(null);
         setIsEditMode(false);
@@ -291,6 +390,47 @@ const Page = () => {
       stopLoading();
     }
   };
+
+  const handleDeleteOffer = async () => {
+  if (!selectedOffer?._id) return;
+
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this offer? This action cannot be undone."
+  );
+  
+  if (!confirmDelete) return;
+
+  setLoading(true);
+  startLoading();
+
+  try {
+    const response = await deleteOffer(
+      RESTAURANT_URLS.DELETE_OFFER(selectedOffer._id)
+    );
+
+    if (response.status === 200) {
+      toast.success(response.data.message || "Offer deleted successfully.");
+
+      setRestaurantOffersData((prev) =>
+        prev.filter((offer) => offer._id !== selectedOffer._id)
+      );
+
+      setIsOfferDialogOpen(false);
+      setIsEditMode(false);
+      setSelectedOffer(null);
+    } else {
+      toast.error(
+        response.data.message || "An error occurred while deleting the offer."
+      );
+    }
+  } catch (error) {
+    console.error("Error deleting offer:", error);
+    toast.error("Failed to delete offer. Please try again later.");
+  } finally {
+    setLoading(false);
+    stopLoading();
+  }
+};
 
   const handleImageUploaded = async (key: string) => {
     if (!key) {
@@ -352,6 +492,7 @@ const Page = () => {
     setIsEditMode(true);
   };
 
+  console.log(editRestroOfferData, "restroOffer");
   const handleEditSaveRestaurant = async () => {
     if (!id) return;
     setLoading(true);
@@ -373,7 +514,11 @@ const Page = () => {
           response.data.message || "Restaurant Updated Successfully."
         );
         let imageUrl = imagePreview || "/images/rest-image.png";
-        if (isImageChanged && editFormData.image && !editFormData.image.startsWith("http")) {
+        if (
+          isImageChanged &&
+          editFormData.image &&
+          !editFormData.image.startsWith("http")
+        ) {
           try {
             const { fileUrl } = await getFileWithMetadata(editFormData.image);
             imageUrl = fileUrl;
@@ -802,6 +947,19 @@ const Page = () => {
                           {selectedOffer.redeemInStore}
                         </div>
                       )}
+
+                      {isEditMode &&
+                      selectedOffer.isOfferAssigned &&
+                      selectedOffer.isOfferAssigned === true ? (
+                        <>
+                          <div className="min-h-4 pt-1 text-[#FF0000] text-xs font-normal">
+                            Offers Assigned to any user can't be Deleted ! You
+                            can Deactivate the offer or later activate it again.
+                          </div>
+                        </>
+                      ) : (
+                        ""
+                      )}
                     </div>
                   </div>
                 </div>
@@ -809,7 +967,7 @@ const Page = () => {
             )}
           </AlertDialogHeader>
 
-          <AlertDialogFooter className="!justify-center items-center mt-6 gap-3">
+          <AlertDialogFooter className="!justify-start items-center mt-6 gap-3">
             {isEditMode ? (
               <>
                 <AlertDialogCancel
@@ -824,6 +982,26 @@ const Page = () => {
                 >
                   Save Changes
                 </Button>
+                {selectedOffer.isOfferAssigned &&
+                selectedOffer.isOfferAssigned === true ? (
+              <Button
+          onClick={handleToggleOffer}
+          className={`py-3 px-8 h-auto border-0 cursor-pointer rounded-lg text-sm min-w-[140px] ${
+            isOfferActive
+              ? "!text-white !bg-[#ef4444] hover:!bg-[#dc2626]"
+              : "!text-white !bg-[#22c55e] hover:!bg-[#16a34a]"
+          }`}
+        >
+          {isOfferActive ? "Deactivate" : "Activate"}
+        </Button>
+                ) : (
+                   <Button
+          onClick={handleDeleteOffer}
+          className="py-3 px-8 h-auto border-0 cursor-pointer rounded-lg !text-white text-sm !bg-[#b40000] min-w-[120px] hover:!bg-[#8b0000]"
+        >
+          Delete Offer
+        </Button>
+                )}
               </>
             ) : (
               <AlertDialogCancel

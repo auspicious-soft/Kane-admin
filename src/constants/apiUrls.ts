@@ -18,12 +18,15 @@ export const RESTAURANT_URLS = {
   GET_SINGLE_RESTAURANT: (id: string) => `${API_BASE_ADMIN}/restaurants/${id}`,
   UPDATE_RESTAURANT: (id: string) => `${API_BASE_ADMIN}/restaurants/${id}`,
   DELETE_RESTAURANT: (id: string) => `${API_BASE_ADMIN}/restaurants/${id}`,
+  DELETE_OFFER: (id: string) => `${API_BASE_ADMIN}/restaurants-offers/${id}`,
+
   CREATE_RESTAURANTS_OFFER: `${API_BASE_ADMIN}/restaurants-offers`,
   GET_ALL_RESTAURANTS_OFFERS: `${API_BASE_ADMIN}/restaurants-offers`,
   GET_SINGLE_RESTAURANT_OFFER: (id: string) =>
     `${API_BASE_ADMIN}/restaurants-offers/${id}`,
   UPDATE_RESTAURANT_OFFER: (id: string) =>
     `${API_BASE_ADMIN}/restaurants-offers/${id}`,
+
 };
 
 export const USER_URLS = {
