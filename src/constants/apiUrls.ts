@@ -16,6 +16,7 @@ export const RESTAURANT_URLS = {
   CREATE_RESTAURANTS: `${API_BASE_ADMIN}/restaurants`,
   GET_ALL_RESTAURANTS:  (page: number = 1, limit: number = 10) => `${API_BASE_ADMIN}/restaurants?page=${page}&limit=${limit}`,
   GET_SINGLE_RESTAURANT: (id: string) => `${API_BASE_ADMIN}/restaurants/${id}`,
+  GET_SINGLE_RESTAURANT_WITH_ACTIVE: (id: string) => `${API_BASE_ADMIN}/restaurants/${id}?isActive=true`,
   UPDATE_RESTAURANT: (id: string) => `${API_BASE_ADMIN}/restaurants/${id}`,
   DELETE_RESTAURANT: (id: string) => `${API_BASE_ADMIN}/restaurants/${id}`,
   DELETE_OFFER: (id: string) => `${API_BASE_ADMIN}/restaurants-offers/${id}`,

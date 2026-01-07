@@ -134,7 +134,7 @@ const getTodayDate = () => {
       try {
         startLoading();
         const response = await GetRestaurantById(
-          RESTAURANT_URLS.GET_SINGLE_RESTAURANT(couponData.restaurantId)
+          RESTAURANT_URLS.GET_SINGLE_RESTAURANT_WITH_ACTIVE(couponData.restaurantId)
         );
         if (response.status === 200) {
           setRestaurantOffersData(response.data.data.offers);
