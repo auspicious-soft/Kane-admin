@@ -73,7 +73,7 @@ const data = {
       icon: Policies,
     },
     {
-      title: "Coupans",
+      title: "Coupons",
       url: "/all-coupons",
       icon: CoupanIcon,
       matchUrls: ["/add-new-coupons"],
