@@ -46,6 +46,7 @@ interface Offer {
 interface Restaurant {
   restaurantName: string;
   logo: string;
+  eposLocationId:string
 }
 
 const Page = () => {
@@ -57,6 +58,7 @@ const Page = () => {
   const [restaurantData, setRestaurantData] = useState<Restaurant>({
     restaurantName: "",
     logo: "",
+    eposLocationId:""
   });
   const [restaurantOffersData, setRestaurantOffersData] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,6 +70,7 @@ const [isOfferActive, setIsOfferActive] = useState<boolean>(false);
   const [editFormData, setEditFormData] = useState({
     restaurantName: "",
     image: "",
+    eposLocationId:"",
   });
   const [editRestroOfferData, setEditRestroOfferData] = useState({
     offerName: "",
@@ -104,7 +107,7 @@ const [isOfferActive, setIsOfferActive] = useState<boolean>(false);
           const restData = response.data.data.restaurant;
           const restOfferData = response.data.data.offers;
           let imageUrl = "";
-          let imageKey = restData.image || ""; // Store the S3 key
+          const imageKey = restData.image || ""; // Store the S3 key
           if (restData.image) {
             try {
               const { fileUrl } = await getFileWithMetadata(restData.image);
@@ -122,6 +125,7 @@ const [isOfferActive, setIsOfferActive] = useState<boolean>(false);
           setRestaurantData({
             restaurantName: restData.restaurantName,
             logo: imageUrl,
+            eposLocationId:restData.eposLocationId,
           });
           const processedOffers = await Promise.all(
             restOfferData.map(async (offer: Offer) => {
@@ -149,6 +153,7 @@ const [isOfferActive, setIsOfferActive] = useState<boolean>(false);
           setEditFormData({
             restaurantName: restData.restaurantName || "",
             image: imageKey, // Store S3 key instead of URL
+            eposLocationId:restData.eposLocationId,
           });
           setEditRestroOfferData({
             offerName: "",
@@ -204,6 +209,7 @@ const [isOfferActive, setIsOfferActive] = useState<boolean>(false);
     setIsEditMode(false);
     setEditFormData({
       restaurantName: restaurantData.restaurantName,
+      eposLocationId: restaurantData.eposLocationId,
       image: restaurantData.logo, // Use the original logo (URL or empty)
     });
      setIsOfferActive(selectedOffer?.isActive || false);
@@ -534,10 +540,12 @@ const handleToggleOffer = async () => {
         setRestaurantData({
           restaurantName: editFormData.restaurantName,
           logo: imageUrl,
+          eposLocationId:editFormData.eposLocationId
         });
         setEditFormData({
           restaurantName: editFormData.restaurantName,
           image: isImageChanged ? editFormData.image : restaurantData.logo, // Keep S3 key or original logo
+          eposLocationId:editFormData.eposLocationId,
         });
         setImagePreview(imageUrl); // Ensure imagePreview is updated
         setIsEditMode(false);
@@ -655,6 +663,22 @@ const handleToggleOffer = async () => {
                   required
                 />
               </div>
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="name" className="text-sm">
+                  Epos Location ID
+                </Label>
+                <Input
+                  id="name"
+                  type="text"
+                  value={
+                    editFormData.eposLocationId ||
+                    restaurantData.eposLocationId ||
+                    ""
+                  }
+                  readOnly
+                  required
+                />
+              </div>
               <AlertDialog>
                 <AlertDialogTrigger className="cursor-pointer max-w-max px-[30px] py-2.5 bg-transparent rounded inline-flex justify-center items-center gap-2 text-[#E4BC84] text-sm font-normal !border-[#E4BC84] border-1">
                   Edit
@@ -691,6 +715,20 @@ const handleToggleOffer = async () => {
                           handleInputChange("restaurantName", e.target.value)
                         }
                         placeholder="Enter restaurant name"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-3 max-w-[370px] m-auto w-full">
+                      <Label htmlFor="name" className="text-sm">
+                        EPOS Location ID
+                      </Label>
+                      <Input
+                        id="name"
+                        type="text"
+                        value={editFormData.eposLocationId}
+                        onChange={(e) =>
+                          handleInputChange("eposLocationId", e.target.value)
+                        }
+                        placeholder="Enter EPOS Location ID"
                       />
                     </div>
                   </AlertDialogHeader>
@@ -953,7 +991,7 @@ const handleToggleOffer = async () => {
                       selectedOffer.isOfferAssigned === true ? (
                         <>
                           <div className="min-h-4 pt-1 text-[#FF0000] text-xs font-normal">
-                            Offers Assigned to any user can't be Deleted ! You
+                            Offers Assigned to any user can&apos;t be Deleted ! You
                             can Deactivate the offer or later activate it again.
                           </div>
                         </>

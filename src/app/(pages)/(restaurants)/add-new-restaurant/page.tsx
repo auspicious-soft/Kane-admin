@@ -47,7 +47,8 @@ const Page = () => {
 
     if (
       !restaurantDetails.restaurantName ||
-      !restaurantDetails.restaurantLogo
+      !restaurantDetails.restaurantLogo||
+      !restaurantDetails.eposLocationId
     ) {
       setTimeout(() => {
         stopLoading();
@@ -64,6 +65,7 @@ const Page = () => {
           restaurantDetails: {
             restaurantName: restaurantDetails.restaurantName,
             image: restaurantDetails.restaurantLogo,
+            eposLocationId:restaurantDetails.eposLocationId
           },
         }
       );
