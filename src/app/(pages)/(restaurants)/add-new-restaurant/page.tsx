@@ -168,7 +168,7 @@ const Page = () => {
                 <Input
                   id="name"
                   type="text"
-                  placeholder="Restaurant Name"
+                  placeholder="Epos Location Id"
                   required
                   value={restaurantDetails.eposLocationId}
                   onChange={(e) =>
