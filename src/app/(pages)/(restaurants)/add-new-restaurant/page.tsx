@@ -170,7 +170,7 @@ const Page = () => {
                   type="text"
                   placeholder="Restaurant Name"
                   required
-                  value={restaurantDetails.restaurantName}
+                  value={restaurantDetails.eposLocationId}
                   onChange={(e) =>
                     setRestaurantDetails({
                       ...restaurantDetails,
