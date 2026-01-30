@@ -5,7 +5,9 @@ interface SharedData {
   restaurantDetails: {
     restaurantName: string;
     restaurantLogo: string;
+    eposLocationId:string;
   } | null;
+
 }
 
 interface DataContextType {

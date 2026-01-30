@@ -99,10 +99,11 @@ const AddNewOfferContent = () => {
     setFormSubmitted(true);
     if (
       !sharedData.restaurantDetails.restaurantName ||
-      !sharedData.restaurantDetails.restaurantLogo
+      !sharedData.restaurantDetails.restaurantLogo || 
+      !sharedData.restaurantDetails.eposLocationId
     ) {
       toast.error(
-        "Restaurant name and logo are required. Please go back and fill the inputs."
+        "Restaurant name, logo and eposLocationId are required. Please go back and fill the inputs."
       );
       return;
     }
@@ -122,6 +123,7 @@ const AddNewOfferContent = () => {
           restaurantDetails: {
             restaurantName: sharedData.restaurantDetails.restaurantName,
             image: sharedData.restaurantDetails.restaurantLogo,
+            eposLocationId:sharedData.restaurantDetails.eposLocationId,
           },
           restaurantOffers: restaurantOffers.map((offer) => ({
             ...offer,
