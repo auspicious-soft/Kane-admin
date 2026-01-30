@@ -18,6 +18,7 @@ const Page = () => {
   const [restaurantDetails, setRestaurantDetails] = useState({
     restaurantName: "",
     restaurantLogo: "",
+    eposLocationId:"",
   });
 
   const [isUploading, setIsUploading] = useState(false);
@@ -71,6 +72,7 @@ const Page = () => {
         setRestaurantDetails({
           restaurantName: "",
           restaurantLogo: "",
+          eposLocationId:"",
         });
         toast.success(
           response.data.message || "Restaurant Created Successfully. Thank You"
@@ -155,6 +157,24 @@ const Page = () => {
                     setRestaurantDetails({
                       ...restaurantDetails,
                       restaurantName: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="name" className="text-sm">
+                  Epos Location Id
+                </Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Restaurant Name"
+                  required
+                  value={restaurantDetails.restaurantName}
+                  onChange={(e) =>
+                    setRestaurantDetails({
+                      ...restaurantDetails,
+                      eposLocationId: e.target.value,
                     })
                   }
                 />
