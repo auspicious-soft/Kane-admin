@@ -56,7 +56,7 @@ const AddNewOfferContent = () => {
   ]);
   const [errors, setErrors] = useState<Errors>({});
   const [formSubmitted, setFormSubmitted] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const { startLoading, stopLoading } = useLoading();
   const router = useRouter();
   const { sharedData } = useData();
